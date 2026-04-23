@@ -196,10 +196,8 @@ feat: adiciona rota de orquestração de resgate
 
 ## 👥 Equipe
 
-Hackathon UNASP 2026
+Gabriel Yoshino
+Lais Gonçalves
+Mateus Alves
+Vitor Bueno
 
----
-
-<p align="center">
-  Feito com ❤️ para o <strong>Hackathon UNASP 2026</strong>
-</p>
