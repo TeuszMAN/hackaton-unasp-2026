@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hackathon
+      POSTGRES_PASSWORD: hackathon123
+      POSTGRES_DB: voluntariado_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql://hackathon:hackathon123@db:5432/voluntariado_db
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
