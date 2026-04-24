@@ -235,4 +235,125 @@ O feedback ajusta a reputação do voluntário, que influencia os próximos matc
 | `POST` | `/api/v1/dev/seed-voluntarios-exemplo` | Popula o banco com 15 voluntários em SP |
 | `DELETE` | `/api/v1/dev/reset` | Zera todas as tabelas |
 
-> O Swagger UI em `/docs` é o contrato autoritativo — todos os sc
+> O Swagger UI em `/docs` é o contrato autoritativo — todos os schemas, exemplos e descrições estão lá e são consumidos pelo watsonx Orchestrate.
+
+---
+
+## 🧠 Integração watsonx.ai (para o Vitor)
+
+A fronteira entre backend e IA está em `app/services/ai.py`. A interface `IAExtracaoService` define dois métodos a implementar:
+
+```python
+class IAExtracaoService:
+    async def extrair_habilidades_voluntario(self, relato: str) -> ExtracaoVoluntario: ...
+    async def extrair_requisitos_necessidade(self, descricao: str) -> ExtracaoNecessidade: ...
+```
+
+Há duas implementações:
+
+- `IAFallbackKeywords` — fallback determinístico baseado em match contra os sinônimos da `SKILLS_TAXONOMIA`. Usado como default e também se o watsonx.ai estiver indisponível. Permite rodar a demo sem credenciais IBM.
+- `IAWatsonxService` — esqueleto para a integração real. Já traz prompts sugeridos em docstring, leitura das env vars e delega para o fallback enquanto o `TODO(Vitor)` não for implementado.
+
+**Para ativar o watsonx.ai:**
+
+```bash
+# .env
+IA_PROVIDER=watsonx
+WATSONX_API_KEY=...
+WATSONX_PROJECT_ID=...
+WATSONX_MODEL_ID=ibm/granite-3-8b-instruct
+```
+
+A factory `get_ia_service()` faz a seleção. O restante do código não precisa mudar.
+
+---
+
+## 🎛 Integração watsonx Orchestrate (para o Gabriel)
+
+A API expõe um contrato OpenAPI rico em `http://localhost:8000/openapi.json` pronto para ser importado como Skill no watsonx Orchestrate. Descrições semânticas, exemplos explícitos em cada campo e tags temáticas (`Voluntários`, `Necessidades`, `Vínculos`, `Estatísticas`) facilitam a interpretação automática.
+
+As rotas recomendadas para virar Skills:
+
+- **"Cadastrar voluntário"** → `POST /api/v1/voluntarios`
+- **"Registrar necessidade de crise"** → `POST /api/v1/necessidades`
+- **"Encontrar voluntários para uma crise"** → `POST /api/v1/vinculos`
+- **"Voluntário aceita missão"** → `POST /api/v1/vinculos/{id}/aceitar`
+- **"Concluir atendimento"** → `POST /api/v1/vinculos/{id}/concluir`
+- **"Enviar feedback pós-atendimento"** → `POST /api/v1/vinculos/{id}/feedback`
+
+---
+
+## ⚙️ Variáveis de Ambiente
+
+Veja `.env.example` para a lista completa. Resumo:
+
+| Variável | Obrigatória | Default | Função |
+|---|---|---|---|
+| `DATABASE_URL` | não | `postgresql://hackathon:hackathon123@db:5432/voluntariado_db` | Conexão com o Postgres |
+| `IA_PROVIDER` | não | `fallback` | `fallback` ou `watsonx` |
+| `WATSONX_API_KEY` | se `IA_PROVIDER=watsonx` | — | Chave do watsonx.ai |
+| `WATSONX_PROJECT_ID` | se `IA_PROVIDER=watsonx` | — | Project ID do watsonx.ai |
+| `WATSONX_MODEL_ID` | não | `ibm/granite-3-8b-instruct` | Modelo Granite |
+| `WATSONX_URL` | não | `https://us-south.ml.cloud.ibm.com` | Endpoint regional |
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+hackaton-unasp-2026/
+├── main.py                     # Ponto de entrada FastAPI (wire up)
+├── app/
+│   ├── database.py             # Engine SQLAlchemy + get_db
+│   ├── models.py               # Models ORM (Voluntario, Necessidade, Vinculo, ...)
+│   ├── schemas.py              # Schemas Pydantic (I/O + OpenAPI)
+│   ├── taxonomia.py            # Vocabulário controlado de habilidades (24 skills)
+│   ├── services/
+│   │   ├── ai.py               # Interface p/ watsonx.ai + fallback determinístico
+│   │   ├── geocoding.py        # Geocoder Nominatim (async)
+│   │   └── matching.py         # Haversine + score ponderado por urgência
+│   └── routers/
+│       ├── voluntarios.py      # CRUD + cadastro assíncrono
+│       ├── necessidades.py     # CRUD + cadastro assíncrono
+│       ├── vinculos.py         # Matchmaking + ciclo de vida + feedback
+│       ├── estatisticas.py     # Métricas agregadas
+│       └── dev.py              # Seed de demo e reset
+├── ARCHITECTURE.md             # Documento técnico detalhado
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml          # API + Postgres + pgAdmin
+├── pgadmin-servers.json        # Conexão pré-configurada do pgAdmin
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 📝 Padrão de Commits
+
+Trabalhamos com **[Conventional Commits](https://www.conventionalcommits.org/)**:
+
+| Prefixo | Uso |
+|---|---|
+| `feat:` | Novas funcionalidades |
+| `fix:` | Correções de bugs |
+| `chore:` | Infra / dependências / configuração |
+| `docs:` | Documentação |
+| `refactor:` | Refatoração sem mudar comportamento |
+| `test:` | Adição ou correção de testes |
+
+**Exemplo:**
+
+```
+feat: adiciona algoritmo de matchmaking com score ponderado por urgência
+```
+
+---
+
+## 👥 Equipe
+
+- Gabriel Yoshino
+- Lais Gonçalves
+- Mateus Alves
+- Vitor Bueno
