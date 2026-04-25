@@ -94,6 +94,56 @@
         }
       }
     },
+    "/api/v1/instituicoes": {
+      "post": {
+        "tags": ["Instituições"],
+        "summary": "Cadastrar instituição",
+        "description": "Registra uma nova instituição parceira.",
+        "operationId": "cadastrar_instituicao",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstituicaoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstituicaoOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Instituições"],
+        "summary": "Listar instituições",
+        "operationId": "listar_instituicoes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstituicaoOut"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/necessidades": {
       "post": {
         "tags": ["Necessidades"],
@@ -196,13 +246,32 @@
           "disponibilidade": { "type": "string" }
         }
       },
+      "InstituicaoCreate": {
+        "type": "object",
+        "required": ["nome"],
+        "properties": {
+          "nome": { "type": "string", "example": "Abrigo Esperança" },
+          "cnpj": { "type": "string", "example": "12.345.678/0001-90" },
+          "contato": { "type": "object", "example": {"responsavel": "Maria"} }
+        }
+      },
+      "InstituicaoOut": {
+        "type": "object",
+        "required": ["id", "nome", "verificada"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "verificada": { "type": "boolean" }
+        }
+      },
       "NecessidadeCreate": {
         "type": "object",
         "required": ["descricao_crise"],
         "properties": {
           "descricao_crise": { "type": "string", "example": "Enchente atingiu abrigo Vila Nova..." },
           "endereco": { "type": "string" },
-          "nivel_urgencia": { "type": "string", "enum": ["baixo", "medio", "alto", "critico"] }
+          "nivel_urgencia": { "type": "string", "enum": ["baixo", "medio", "alto", "critico"] },
+          "instituicao_id": { "type": "string", "format": "uuid", "description": "ID da instituição que reportou a crise." }
         }
       },
       "VinculoCreate": {
