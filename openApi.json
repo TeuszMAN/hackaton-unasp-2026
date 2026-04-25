@@ -1,0 +1,257 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API de Voluntariado Inteligente para Crises",
+    "description": "API de orquestração que conecta instituições em situação de crise com voluntários qualificados, utilizando correspondência baseada em habilidades (skill-based volunteering) e proximidade geográfica. Projetada para integração com o IBM watsonx Orchestrate como Skill e com o watsonx.ai (Granite) para extração de habilidades a partir de relatos livres em linguagem natural.",
+    "contact": {
+      "name": "Equipe Hackathon UNASP 2026"
+    },
+    "version": "0.2.0"
+  },
+  "servers": [
+    {
+      "url": "https://coveting-economy-tingling.ngrok-free.dev",
+      "description": "Servidor Local via ngrok"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "description": "Verifica se a API está online e operacional.",
+        "operationId": "health_check__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voluntarios": {
+      "post": {
+        "tags": ["Voluntários"],
+        "summary": "Cadastrar voluntário (assíncrono)",
+        "description": "Recebe um relato livre do voluntário e dispara a extração de habilidades via watsonx.ai.",
+        "operationId": "cadastrar_voluntario",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoluntarioCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskAceita"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Voluntários"],
+        "summary": "Listar voluntários",
+        "operationId": "listar_voluntarios",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VoluntarioOut"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/necessidades": {
+      "post": {
+        "tags": ["Necessidades"],
+        "summary": "Registrar necessidade emergencial",
+        "operationId": "registrar_necessidade",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NecessidadeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskAceita"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos": {
+      "post": {
+        "tags": ["Vínculos"],
+        "summary": "Executar matchmaking",
+        "operationId": "executar_matchmaking",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VinculoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchmakingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/estatisticas": {
+      "get": {
+        "tags": ["Estatísticas"],
+        "summary": "Métricas agregadas",
+        "operationId": "obter_estatisticas",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstatisticasOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VoluntarioCreate": {
+        "type": "object",
+        "required": ["nome", "telefone", "relato", "consentimento_lgpd"],
+        "properties": {
+          "nome": { "type": "string", "example": "Ana Carolina Silva" },
+          "telefone": { "type": "string", "example": "(11) 98765-4321" },
+          "relato": { "type": "string", "example": "Sou enfermeira com 10 anos de experiência..." },
+          "endereco": { "type": "string", "example": "Av. Paulista, 1000 - SP" },
+          "consentimento_lgpd": { "type": "boolean", "example": true }
+        }
+      },
+      "VoluntarioOut": {
+        "type": "object",
+        "required": ["id", "nome", "telefone", "habilidades", "disponibilidade"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "telefone": { "type": "string" },
+          "habilidades": { "type": "array", "items": { "type": "string" } },
+          "disponibilidade": { "type": "string" }
+        }
+      },
+      "NecessidadeCreate": {
+        "type": "object",
+        "required": ["descricao_crise"],
+        "properties": {
+          "descricao_crise": { "type": "string", "example": "Enchente atingiu abrigo Vila Nova..." },
+          "endereco": { "type": "string" },
+          "nivel_urgencia": { "type": "string", "enum": ["baixo", "medio", "alto", "critico"] }
+        }
+      },
+      "VinculoCreate": {
+        "type": "object",
+        "required": ["necessidade_id"],
+        "properties": {
+          "necessidade_id": { "type": "string", "format": "uuid" },
+          "top_n": { "type": "integer", "default": 5 }
+        }
+      },
+      "MatchmakingResponse": {
+        "type": "object",
+        "required": ["necessidade_id", "total_recomendados", "recomendacoes"],
+        "properties": {
+          "necessidade_id": { "type": "string", "format": "uuid" },
+          "total_recomendados": { "type": "integer" },
+          "recomendacoes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MatchRecomendado" }
+          }
+        }
+      },
+      "MatchRecomendado": {
+        "type": "object",
+        "required": ["vinculo_id", "score_match", "distancia_km"],
+        "properties": {
+          "vinculo_id": { "type": "string", "format": "uuid" },
+          "score_match": { "type": "number" },
+          "distancia_km": { "type": "number" }
+        }
+      },
+      "TaskAceita": {
+        "type": "object",
+        "required": ["task_id", "resource_id", "mensagem"],
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" },
+          "resource_id": { "type": "string", "format": "uuid" },
+          "mensagem": { "type": "string", "example": "Processamento iniciado." }
+        }
+      },
+      "EstatisticasOut": {
+        "type": "object",
+        "required": ["total_voluntarios", "voluntarios_disponiveis", "total_necessidades"],
+        "properties": {
+          "total_voluntarios": { "type": "integer" },
+          "voluntarios_disponiveis": { "type": "integer" },
+          "total_necessidades": { "type": "integer" }
+        }
+      }
+    }
+  }
+}
