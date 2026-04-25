@@ -11,14 +11,8 @@
         <!-- Ícones Lucide -->
         <script src="https://unpkg.com/lucide@latest"></script>
 
-        <style>
-        /* Garante que o chat da IBM fique por cima de outros elementos */
-        #ibm-chat-widget { z-index: 9999 !important; position: relative; }
-        
-        /* Animação para o ícone de sincronização */
-        .animate-spin-fast { animation: spin 0.8s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    </style>
+        <!-- style -->
+        <link rel="stylesheet" href="../asset/css/style-index.css">
     </head>
     <body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
 
@@ -212,138 +206,7 @@
                 </div>
             </div>
         </main>
-
-        <!-- Script de Lógica do Frontend -->
-        <script>
-        // ATENÇÃO: Verifique se esta URL é exatamente a do seu terminal ngrok
-        const NGROK_URL = "https://coveting-economy-tingling.ngrok-free.dev";
-        document.getElementById('api-url-text').innerText = NGROK_URL;
-
-        async function fetchDados() {
-            const tableBody = document.getElementById('tabela-voluntarios');
-            const icon = document.getElementById('refresh-icon');
-            const banner = document.getElementById('error-banner');
-            const debugText = document.getElementById('error-debug');
-            const debugOrigin = document.getElementById('debug-origin');
-            const badgeApi = document.getElementById('badge-api');
-            const sDot = document.getElementById('status-dot');
-            const sTxt = document.getElementById('status-text');
-
-            icon.classList.add('animate-spin-fast');
-            banner.classList.add('hidden');
-            debugOrigin.innerText = window.location.origin;
-
-            try {
-                // Configuração comum para os fetches
-                const fetchOptions = {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: { 
-                        'ngrok-skip-browser-warning': 'true',
-                        'Accept': 'application/json'
-                    }
-                };
-
-                // 1. Buscar Estatísticas (/api/v1/estatisticas)
-                console.log("Buscando estatísticas...");
-                const statsRes = await fetch(`${NGROK_URL}/api/v1/estatisticas`, fetchOptions);
-                
-                if (statsRes.ok) {
-                    const stats = await statsRes.json();
-                    document.getElementById('stat-total-voluntarios').innerText = stats.total_voluntarios || 0;
-                    document.getElementById('stat-necessidades-abertas').innerText = stats.necessidades_abertas || 0;
-                    document.getElementById('stat-vinculos-concluidos').innerText = stats.vinculos_concluidos || 0;
-                }
-
-                // 2. Buscar Voluntários (/api/v1/voluntarios)
-                console.log("Buscando lista de voluntários...");
-                const volRes = await fetch(`${NGROK_URL}/api/v1/voluntarios`, fetchOptions);
-                
-                if (volRes.ok) {
-                    const lista = await volRes.json();
-                    
-                    if (!lista || lista.length === 0) {
-                        tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">Nenhum voluntário cadastrado na base de dados.</td></tr>`;
-                    } else {
-                        tableBody.innerHTML = lista.map(vol => {
-                            // Garantir que habilidades seja um array
-                            const habs = Array.isArray(vol.habilidades) ? vol.habilidades : [];
-                            
-                            return `
-                                <tr class="hover:bg-slate-50/80 transition-colors group">
-                                    <td class="px-6 py-4 font-bold text-slate-700 font-medium">${vol.nome}</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-wrap gap-1">
-                                            ${habs.map(h => `
-                                                <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-100">
-                                                    ${h}
-                                                </span>
-                                            `).join('')}
-                                            ${habs.length === 0 ? '<span class="text-slate-300 text-[10px]">Sem habilidades</span>' : ''}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="text-[10px] font-bold ${vol.disponibilidade === 'disponivel' ? 'text-green-600' : 'text-orange-500'} uppercase">
-                                            ${vol.disponibilidade || '---'}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-transparent hover:border-blue-100 transition-all">
-                                            <i data-lucide="phone" class="w-4 h-4"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('');
-                    }
-
-                    // Sucesso na UI
-                    badgeApi.innerText = "ONLINE";
-                    badgeApi.className = "text-green-600 font-bold bg-green-50 px-2.5 py-1 rounded-md border border-green-100 text-[9px]";
-                    sDot.className = "w-2 h-2 rounded-full bg-green-500 animate-pulse";
-                    sTxt.innerText = "Sincronizado";
-                    sTxt.className = "text-[10px] font-bold text-green-700 uppercase";
-                } else {
-                    throw new Error(`Erro HTTP ${volRes.status} ao acessar voluntários.`);
-                }
-            } catch (err) {
-                console.error("Erro Crítico de Fetch:", err);
-                banner.classList.remove('hidden');
-                debugText.innerText = err.message;
-                
-                badgeApi.innerText = "OFFLINE";
-                badgeApi.className = "text-red-600 font-bold bg-red-50 px-2.5 py-1 rounded-md border border-red-100 text-[9px]";
-                sDot.className = "w-2 h-2 rounded-full bg-red-500";
-                sTxt.innerText = "Erro API";
-            } finally {
-                icon.classList.remove('animate-spin-fast');
-                lucide.createIcons();
-            }
-        }
-
-        // Carregamento inicial
-        window.onload = fetchDados;
-    </script>
-
-        <!-- Script IBM Watson -->
-        <script>
-        window.wxOConfiguration = {
-            orchestrationID: "3d7ed1c2090b4b5e9bcdead3a89d1f60_6f41ae2b-4456-4224-96b4-69de8e405c58",
-            hostURL: "https://au-syd.watson-orchestrate.cloud.ibm.com",
-            rootElementID: "ibm-chat-widget", 
-            deploymentPlatform: "ibmcloud",
-            crn: "crn:v1:bluemix:public:watsonx-orchestrate:au-syd:a/3d7ed1c2090b4b5e9bcdead3a89d1f60:6f41ae2b-4456-4224-96b4-69de8e405c58::",
-            chatOptions: {
-                agentId: "8efb193d-a518-41dc-b248-6cf1fc73b783",
-                agentEnvironmentId: "c8ee69af-31f9-4d5c-904e-f3b08fee9a40"
-            }
-        };
-        setTimeout(function() {
-            const s = document.createElement('script');
-            s.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
-            s.onload = () => { if(window.wxoLoader) wxoLoader.init(); };
-            document.head.appendChild(s);
-        }, 500);
-    </script>
+        <!-- Scripts -->
+        <script src="../asset/js/script-index.js"></script>
     </body>
 </html>
