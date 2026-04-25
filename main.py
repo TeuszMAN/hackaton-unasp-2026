@@ -21,6 +21,7 @@ from app import models  # noqa: F401 — necessário para registrar os models no
 from app.routers import (
     dev,
     estatisticas,
+    instituicoes,
     necessidades,
     vinculos,
     voluntarios,
@@ -51,6 +52,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "Health", "description": "Verificação de saúde da API."},
         {"name": "Voluntários", "description": "Cadastro e gestão de voluntários."},
+        {"name": "Instituições", "description": "Cadastro e gestão de instituições parceiras."},
         {"name": "Necessidades", "description": "Registro de demandas de crise."},
         {"name": "Vínculos", "description": "Matchmaking e ciclo de vida dos vínculos."},
         {"name": "Estatísticas", "description": "Métricas agregadas da plataforma."},
@@ -102,6 +104,7 @@ def health_check():
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(voluntarios.router)
+app.include_router(instituicoes.router)
 app.include_router(necessidades.router)
 app.include_router(vinculos.router)
 app.include_router(estatisticas.router)

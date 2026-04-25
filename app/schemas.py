@@ -258,6 +258,46 @@ class EstatisticasOut(BaseModel):
 
 
 # ===========================================================================
+# Instituições
+# ===========================================================================
+class InstituicaoCreate(BaseModel):
+    """Cadastro de uma instituição parceira."""
+
+    nome: str = Field(..., min_length=2, max_length=200, json_schema_extra={"example": "Abrigo Esperança"})
+    cnpj: str | None = Field(
+        None,
+        max_length=20,
+        description="CNPJ da instituição (opcional). Formato: XX.XXX.XXX/XXXX-XX.",
+        json_schema_extra={"example": "12.345.678/0001-90"},
+    )
+    contato: dict | None = Field(
+        None,
+        description="Dados de contato em formato livre (email, telefone, responsável, etc.).",
+        json_schema_extra={"example": {"email": "contato@abrigo.org", "telefone": "(11) 3456-7890", "responsavel": "Maria Lima"}},
+    )
+
+
+class InstituicaoUpdate(BaseModel):
+    """Atualização parcial de uma instituição."""
+
+    nome: str | None = Field(None, min_length=2, max_length=200)
+    cnpj: str | None = Field(None, max_length=20)
+    verificada: bool | None = None
+    contato: dict | None = None
+
+
+class InstituicaoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    nome: str
+    cnpj: str | None
+    verificada: bool
+    contato: dict | None
+    criado_em: datetime
+
+
+# ===========================================================================
 # Assíncrono — retorno padrão para processamento em background
 # ===========================================================================
 class TaskAceita(BaseModel):
