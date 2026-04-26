@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchHelp — Voluntários</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../asset/css/style-home.css" />
+</head>
+<body>
+  <div class="mh-shell">
+    <header class="mh-topbar">
+      <div class="mh-brand">
+        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+        <div>
+          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
+          <div class="mh-brand-sub">Voluntários</div>
+        </div>
+      </div>
+      <nav class="mh-topnav">
+        <a href="home.html">Início</a>
+        <a href="voluntarios.html" class="active">Voluntários</a>
+        <a href="instituicoes.html">Instituições</a>
+        <a href="chamados.html">Chamados</a>
+      </nav>
+    </header>
+
+    <main class="mh-main">
+      <a href="home.html" class="mh-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Voltar ao painel</a>
+      <div class="mh-page-header">
+        <div>
+          <h1>Voluntários</h1>
+          <p>Pessoas cadastradas e prontas para serem chamadas. Filtre como precisar.</p>
+        </div>
+        <button class="mh-btn ghost" onclick="carregar()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar</button>
+      </div>
+
+      <div class="mh-toolbar">
+        <input id="busca" class="mh-input" type="text" placeholder="Buscar por nome..." />
+        <select id="filtroInstituicao" class="mh-select">
+          <option value="">Todas as instituições</option>
+        </select>
+        <select id="filtroDisponibilidade" class="mh-select">
+          <option value="">Qualquer disponibilidade</option>
+          <option value="disponivel">Disponível</option>
+          <option value="ocupado">Ocupado</option>
+          <option value="indisponivel">Indisponível</option>
+        </select>
+        <input id="filtroHabilidade" class="mh-input" type="text" placeholder="Habilidade (ex: medico)" />
+      </div>
+
+      <div id="erro" class="mh-error" style="display:none"></div>
+      <div id="lista" class="mh-list">
+        <div class="mh-empty">Carregando voluntários...</div>
+      </div>
+    </main>
+
+    <footer class="mh-footer">
+      MatchHelp · API: <code id="api-url">—</code>
+    </footer>
+  </div>
+
+  <script src="../asset/js/api-config.js"></script>
+  <script>
+    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+    let voluntariosCache = [];
+    let instituicoesCache = [];
+
+    function badgeStatus(s) {
+      const map = { disponivel: ["green","Disponível"], ocupado: ["amber","Ocupado"], indisponivel: ["slate","Indisponível"] };
+      const [cls, txt] = map[s] || ["slate", s || "—"];
+      return `<span class="mh-badge ${cls}">${txt}</span>`;
+    }
+
+    function render() {
+      const q = document.getElementById("busca").value.trim().toLowerCase();
+      const instId = document.getElementById("filtroInstituicao").value;
+      const disp = document.getElementById("filtroDisponibilidade").value;
+      const hab = document.getElementById("filtroHabilidade").value.trim().toLowerCase();
+      const lista = document.getElementById("lista");
+
+      const inst = instituicoesCache.find(i => i.id === instId);
+      const filtrados = voluntariosCache.filter(v => {
+        if (q && !(v.nome || "").toLowerCase().includes(q)) return false;
+        if (disp && v.disponibilidade !== disp) return false;
+        if (hab && !(v.habilidades || []).some(h => h.toLowerCase().includes(hab))) return false;
+        if (instId) {
+          // Vínculo via proximidade textual (cidade/endereço) já que voluntários
+          // não pertencem diretamente a uma instituição no modelo.
+          const ref = (inst?.contato?.cidade || inst?.nome || "").toLowerCase();
+          const end = (v.endereco_texto || "").toLowerCase();
+          if (ref && !end.includes(ref)) return false;
+        }
+        return true;
+      });
+
+      if (!filtrados.length) {
+        lista.innerHTML = `<div class="mh-empty">Nenhum voluntário encontrado com esses filtros.</div>`;
+        return;
+      }
+      lista.innerHTML = filtrados.map(v => `
+        <div class="mh-row">
+          <div>
+            <div class="title">${v.nome || "—"}</div>
+            <div class="meta">
+              <span><i data-lucide="phone" style="width:12px;height:12px"></i>${v.telefone || "—"}</span>
+              ${v.email ? `<span><i data-lucide="mail" style="width:12px;height:12px"></i>${v.email}</span>` : ""}
+              ${v.endereco_texto ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i>${v.endereco_texto}</span>` : ""}
+              <span><i data-lucide="star" style="width:12px;height:12px"></i>${(v.reputacao ?? 0).toFixed(1)}</span>
+            </div>
+            ${(v.habilidades || []).length ? `<div class="mh-chips">${v.habilidades.map(h => `<span class="mh-chip">${h}</span>`).join("")}</div>` : ""}
+          </div>
+          <div class="right">${badgeStatus(v.disponibilidade)}</div>
+        </div>
+      `).join("");
+      lucide.createIcons();
+    }
+
+    async function carregar() {
+      const erro = document.getElementById("erro");
+      erro.style.display = "none";
+      try {
+        const [vols, insts] = await Promise.all([
+          window.matchhelpFetch("/api/v1/voluntarios").catch(() => []),
+          window.matchhelpFetch("/api/v1/instituicoes").catch(() => []),
+        ]);
+        voluntariosCache = Array.isArray(vols) ? vols : (vols.items || []);
+        instituicoesCache = Array.isArray(insts) ? insts : (insts.items || []);
+        const sel = document.getElementById("filtroInstituicao");
+        sel.innerHTML = `<option value="">Todas as instituições</option>` +
+          instituicoesCache.map(i => `<option value="${i.id}">${i.nome}</option>`).join("");
+        render();
+      } catch (e) {
+        erro.style.display = "block";
+        erro.innerText = "Falha ao carregar dados da API: " + e.message;
+        document.getElementById("lista").innerHTML = "";
+      }
+    }
+
+    ["busca","filtroInstituicao","filtroDisponibilidade","filtroHabilidade"].forEach(id => {
+      document.getElementById(id).addEventListener("input", render);
+      document.getElementById(id).addEventListener("change", render);
+    });
+
+    lucide.createIcons();
+    carregar();
+  </script>
+</body>
+</html>

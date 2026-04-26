@@ -8,7 +8,7 @@
     },
     "version": "0.2.0"
   },
-  "servers": [
+    "servers": [
     {
       "url": "https://coveting-economy-tingling.ngrok-free.dev",
       "description": "Servidor Local via ngrok"
@@ -17,7 +17,9 @@
   "paths": {
     "/": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
         "description": "Verifica se a API está online e operacional.",
         "operationId": "health_check__get",
@@ -26,7 +28,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+
+                }
               }
             }
           }
@@ -35,10 +39,12 @@
     },
     "/api/v1/voluntarios": {
       "post": {
-        "tags": ["Voluntários"],
+        "tags": [
+          "Voluntários"
+        ],
         "summary": "Cadastrar voluntário (assíncrono)",
-        "description": "Recebe um relato livre do voluntário e dispara a extração de habilidades via watsonx.ai.",
-        "operationId": "cadastrar_voluntario",
+        "description": "Recebe um relato livre do voluntário e dispara, em background, a extração de habilidades via watsonx.ai (Granite) e a geocodificação do endereço. Retorna imediatamente 202 com o `task_id` e o `resource_id` (id do voluntário) — consulte `GET /api/v1/voluntarios/{id}` para acompanhar o enriquecimento. Retorna 409 se já existe um voluntário com o mesmo telefone ou e-mail.",
+        "operationId": "cadastrar_voluntario_api_v1_voluntarios_post",
         "requestBody": {
           "required": true,
           "content": {
@@ -59,21 +65,81 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Voluntário já cadastrado com o mesmo telefone ou e-mail.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Voluntário já cadastrado com este telefone. Não é permitido cadastrar o mesmo voluntário duas vezes. Utilize o ID existente: \u003Cuuid\u003E"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
       "get": {
-        "tags": ["Voluntários"],
+        "tags": [
+          "Voluntários"
+        ],
         "summary": "Listar voluntários",
-        "operationId": "listar_voluntarios",
+        "description": "Lista voluntários cadastrados com filtros opcionais.",
+        "operationId": "listar_voluntarios_api_v1_voluntarios_get",
         "parameters": [
+          {
+            "name": "disponibilidade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StatusVoluntario"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Disponibilidade"
+            }
+          },
+          {
+            "name": "habilidade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra voluntários que possuam ao menos a habilidade informada (código da taxonomia).",
+              "title": "Habilidade"
+            },
+            "description": "Filtra voluntários que possuam ao menos a habilidade informada (código da taxonomia)."
+          },
           {
             "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "default": 50
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
             }
           }
         ],
@@ -86,7 +152,199 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/VoluntarioOut"
-                  }
+                  },
+                  "title": "Response Listar Voluntarios Api V1 Voluntarios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voluntarios/verificar": {
+      "get": {
+        "tags": [
+          "Voluntários"
+        ],
+        "summary": "Verificar duplicidade de cadastro",
+        "description": "Consulta se já existe voluntário cadastrado com algum dos identificadores informados (telefone, nome ou email). Retorna apenas a indicação de duplicidade e o ID interno — NÃO expõe dados pessoais. Deve ser usado pelo agente antes de chamar `POST /api/v1/voluntarios`.",
+        "operationId": "verificar_voluntario_api_v1_voluntarios_verificar_get",
+        "parameters": [
+          {
+            "name": "telefone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 8,
+                  "maxLength": 40
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Telefone"
+            }
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nome"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoluntarioVerificacao"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voluntarios/{voluntario_id}": {
+      "get": {
+        "tags": [
+          "Voluntários"
+        ],
+        "summary": "Consultar voluntário",
+        "operationId": "obter_voluntario_api_v1_voluntarios__voluntario_id__get",
+        "parameters": [
+          {
+            "name": "voluntario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Voluntario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoluntarioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Voluntários"
+        ],
+        "summary": "Atualizar perfil do voluntário",
+        "operationId": "atualizar_voluntario_api_v1_voluntarios__voluntario_id__patch",
+        "parameters": [
+          {
+            "name": "voluntario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Voluntario Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoluntarioUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoluntarioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -96,10 +354,12 @@
     },
     "/api/v1/instituicoes": {
       "post": {
-        "tags": ["Instituições"],
+        "tags": [
+          "Instituições"
+        ],
         "summary": "Cadastrar instituição",
-        "description": "Registra uma nova instituição parceira.",
-        "operationId": "cadastrar_instituicao",
+        "description": "Registra uma nova instituição parceira na plataforma.",
+        "operationId": "cadastrar_instituicao_api_v1_instituicoes_post",
         "requestBody": {
           "required": true,
           "content": {
@@ -120,13 +380,58 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
       "get": {
-        "tags": ["Instituições"],
+        "tags": [
+          "Instituições"
+        ],
         "summary": "Listar instituições",
-        "operationId": "listar_instituicoes",
+        "description": "Lista instituições cadastradas com filtros opcionais.",
+        "operationId": "listar_instituicoes_api_v1_instituicoes_get",
+        "parameters": [
+          {
+            "name": "verificada",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo status de verificação.",
+              "title": "Verificada"
+            },
+            "description": "Filtra pelo status de verificação."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -136,7 +441,148 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/InstituicaoOut"
-                  }
+                  },
+                  "title": "Response Listar Instituicoes Api V1 Instituicoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instituicoes/{instituicao_id}": {
+      "get": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Consultar instituição",
+        "operationId": "obter_instituicao_api_v1_instituicoes__instituicao_id__get",
+        "parameters": [
+          {
+            "name": "instituicao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Instituicao Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstituicaoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Atualizar instituição",
+        "description": "Atualiza parcialmente os dados de uma instituição, incluindo seu status de verificação.",
+        "operationId": "atualizar_instituicao_api_v1_instituicoes__instituicao_id__patch",
+        "parameters": [
+          {
+            "name": "instituicao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Instituicao Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstituicaoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstituicaoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Remover instituição",
+        "description": "Remove uma instituição. Necessidades vinculadas são excluídas em cascata (cascade delete).",
+        "operationId": "remover_instituicao_api_v1_instituicoes__instituicao_id__delete",
+        "parameters": [
+          {
+            "name": "instituicao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Instituicao Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -146,9 +592,12 @@
     },
     "/api/v1/necessidades": {
       "post": {
-        "tags": ["Necessidades"],
-        "summary": "Registrar necessidade emergencial",
-        "operationId": "registrar_necessidade",
+        "tags": [
+          "Necessidades"
+        ],
+        "summary": "Registrar necessidade emergencial (assíncrono)",
+        "description": "Recebe uma descrição em linguagem natural de uma situação de crise. Dispara, em background, a extração das habilidades requeridas e a inferência do nível de urgência via watsonx.ai, além da geocodificação do endereço. Retorna 202 imediatamente com os IDs de acompanhamento.",
+        "operationId": "registrar_necessidade_api_v1_necessidades_post",
         "requestBody": {
           "required": true,
           "content": {
@@ -169,24 +618,159 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Necessidades"
+        ],
+        "summary": "Listar necessidades",
+        "operationId": "listar_necessidades_api_v1_necessidades_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StatusNecessidade"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "urgencia",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NivelUrgencia"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Urgencia"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NecessidadeOut"
+                  },
+                  "title": "Response Listar Necessidades Api V1 Necessidades Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/necessidades/{necessidade_id}": {
+      "get": {
+        "tags": [
+          "Necessidades"
+        ],
+        "summary": "Consultar necessidade",
+        "operationId": "obter_necessidade_api_v1_necessidades__necessidade_id__get",
+        "parameters": [
+          {
+            "name": "necessidade_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Necessidade Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NecessidadeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/v1/vinculos": {
       "post": {
-        "tags": ["Vínculos"],
-        "summary": "Executar matchmaking",
-        "operationId": "executar_matchmaking",
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Executar matchmaking para uma necessidade",
+        "description": "Roda o algoritmo de correspondência inteligente e cria registros de proposta de vínculo (status `proposto`) para os top-N voluntários mais aderentes. O score combina skill match, proximidade geográfica, reputação e disponibilidade recente (anti-burnout), com pesos ajustados conforme o nível de urgência da necessidade.",
+        "operationId": "executar_matchmaking_api_v1_vinculos_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/VinculoCreate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -198,15 +782,256 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}": {
+      "get": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Consultar vínculo",
+        "operationId": "obter_vinculo_api_v1_vinculos__vinculo_id__get",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/aceitar": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Voluntário aceita o vínculo",
+        "description": "Quando aceito, a necessidade transita para `em_atendimento` e o voluntário para `em_missao`. Este endpoint expõe o vínculo completo (inclusive contato) para a instituição consultar.",
+        "operationId": "aceitar_vinculo_api_v1_vinculos__vinculo_id__aceitar_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/recusar": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Voluntário recusa o vínculo",
+        "operationId": "recusar_vinculo_api_v1_vinculos__vinculo_id__recusar_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/concluir": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Registrar conclusão do atendimento",
+        "description": "Marca o vínculo como concluído e libera o voluntário (volta para `disponivel`). A necessidade é marcada como `resolvida`.",
+        "operationId": "concluir_vinculo_api_v1_vinculos__vinculo_id__concluir_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/feedback": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Registrar feedback pós-atendimento",
+        "description": "Fecha o loop agêntico: o feedback ajusta a reputação do voluntário via média móvel simples, realimentando o ranking em futuros matches.",
+        "operationId": "registrar_feedback_api_v1_vinculos__vinculo_id__feedback_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/v1/estatisticas": {
       "get": {
-        "tags": ["Estatísticas"],
-        "summary": "Métricas agregadas",
-        "operationId": "obter_estatisticas",
+        "tags": [
+          "Estatísticas"
+        ],
+        "summary": "Métricas agregadas da plataforma",
+        "description": "Números de alto nível sobre voluntários, necessidades e vínculos. Ideal para o dashboard e para apresentar impacto no pitch.",
+        "operationId": "obter_estatisticas_api_v1_estatisticas_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -220,107 +1045,1201 @@
           }
         }
       }
+    },
+    "/api/v1/dev/seed-voluntarios-exemplo": {
+      "post": {
+        "tags": [
+          "Dev / Demo"
+        ],
+        "summary": "[DEV] Carrega voluntários de demonstração",
+        "description": "Popula o banco com ~15 voluntários distribuídos na RMSP. Operação idempotente: só insere se o nome ainda não existir.",
+        "operationId": "seed_voluntarios_api_v1_dev_seed_voluntarios_exemplo_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dev/reset": {
+      "delete": {
+        "tags": [
+          "Dev / Demo"
+        ],
+        "summary": "[DEV] Zera todas as tabelas",
+        "description": "Remove todos os voluntários, necessidades, vínculos e feedbacks. Uso estritamente de desenvolvimento.",
+        "operationId": "reset_tudo_api_v1_dev_reset_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "VoluntarioCreate": {
-        "type": "object",
-        "required": ["nome", "telefone", "relato", "consentimento_lgpd"],
+      "EstatisticasOut": {
         "properties": {
-          "nome": { "type": "string", "example": "Ana Carolina Silva" },
-          "telefone": { "type": "string", "example": "(11) 98765-4321" },
-          "relato": { "type": "string", "example": "Sou enfermeira com 10 anos de experiência..." },
-          "endereco": { "type": "string", "example": "Av. Paulista, 1000 - SP" },
-          "consentimento_lgpd": { "type": "boolean", "example": true }
-        }
+          "total_voluntarios": {
+            "type": "integer",
+            "title": "Total Voluntarios"
+          },
+          "voluntarios_disponiveis": {
+            "type": "integer",
+            "title": "Voluntarios Disponiveis"
+          },
+          "total_necessidades": {
+            "type": "integer",
+            "title": "Total Necessidades"
+          },
+          "necessidades_abertas": {
+            "type": "integer",
+            "title": "Necessidades Abertas"
+          },
+          "necessidades_criticas_abertas": {
+            "type": "integer",
+            "title": "Necessidades Criticas Abertas"
+          },
+          "total_vinculos": {
+            "type": "integer",
+            "title": "Total Vinculos"
+          },
+          "vinculos_aceitos": {
+            "type": "integer",
+            "title": "Vinculos Aceitos"
+          },
+          "vinculos_concluidos": {
+            "type": "integer",
+            "title": "Vinculos Concluidos"
+          },
+          "tempo_medio_ate_aceite_minutos": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tempo Medio Ate Aceite Minutos"
+          },
+          "reputacao_media": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reputacao Media"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_voluntarios",
+          "voluntarios_disponiveis",
+          "total_necessidades",
+          "necessidades_abertas",
+          "necessidades_criticas_abertas",
+          "total_vinculos",
+          "vinculos_aceitos",
+          "vinculos_concluidos",
+          "tempo_medio_ate_aceite_minutos",
+          "reputacao_media"
+        ],
+        "title": "EstatisticasOut"
       },
-      "VoluntarioOut": {
-        "type": "object",
-        "required": ["id", "nome", "telefone", "habilidades", "disponibilidade"],
+      "FeedbackCreate": {
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "nome": { "type": "string" },
-          "telefone": { "type": "string" },
-          "habilidades": { "type": "array", "items": { "type": "string" } },
-          "disponibilidade": { "type": "string" }
-        }
+          "voluntario_compareceu": {
+            "type": "boolean",
+            "title": "Voluntario Compareceu",
+            "example": true
+          },
+          "skill_adequada": {
+            "type": "boolean",
+            "title": "Skill Adequada",
+            "example": true
+          },
+          "nota": {
+            "type": "integer",
+            "maximum": 5,
+            "minimum": 1,
+            "title": "Nota",
+            "example": 5
+          },
+          "comentario": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          }
+        },
+        "type": "object",
+        "required": [
+          "voluntario_compareceu",
+          "skill_adequada",
+          "nota"
+        ],
+        "title": "FeedbackCreate"
+      },
+      "FeedbackOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "vinculo_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vinculo Id"
+          },
+          "voluntario_compareceu": {
+            "type": "boolean",
+            "title": "Voluntario Compareceu"
+          },
+          "skill_adequada": {
+            "type": "boolean",
+            "title": "Skill Adequada"
+          },
+          "nota": {
+            "type": "integer",
+            "title": "Nota"
+          },
+          "comentario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comentario"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "vinculo_id",
+          "voluntario_compareceu",
+          "skill_adequada",
+          "nota",
+          "comentario",
+          "criado_em"
+        ],
+        "title": "FeedbackOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
       },
       "InstituicaoCreate": {
-        "type": "object",
-        "required": ["nome"],
         "properties": {
-          "nome": { "type": "string", "example": "Abrigo Esperança" },
-          "cnpj": { "type": "string", "example": "12.345.678/0001-90" },
-          "contato": { "type": "object", "example": {"responsavel": "Maria"} }
-        }
+          "nome": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Nome",
+            "example": "Abrigo Esperança"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj",
+            "description": "CNPJ da instituição (opcional). Formato: XX.XXX.XXX/XXXX-XX.",
+            "example": "12.345.678/0001-90"
+          },
+          "contato": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato",
+            "description": "Dados de contato em formato livre (email, telefone, responsável, etc.).",
+            "example": {
+              "email": "contato@abrigo.org",
+              "responsavel": "Maria Lima",
+              "telefone": "(11) 3456-7890"
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "InstituicaoCreate",
+        "description": "Cadastro de uma instituição parceira."
       },
       "InstituicaoOut": {
-        "type": "object",
-        "required": ["id", "nome", "verificada"],
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "nome": { "type": "string" },
-          "verificada": { "type": "boolean" }
-        }
-      },
-      "NecessidadeCreate": {
-        "type": "object",
-        "required": ["descricao_crise"],
-        "properties": {
-          "descricao_crise": { "type": "string", "example": "Enchente atingiu abrigo Vila Nova..." },
-          "endereco": { "type": "string" },
-          "nivel_urgencia": { "type": "string", "enum": ["baixo", "medio", "alto", "critico"] },
-          "instituicao_id": { "type": "string", "format": "uuid", "description": "ID da instituição que reportou a crise." }
-        }
-      },
-      "VinculoCreate": {
-        "type": "object",
-        "required": ["necessidade_id"],
-        "properties": {
-          "necessidade_id": { "type": "string", "format": "uuid" },
-          "top_n": { "type": "integer", "default": 5 }
-        }
-      },
-      "MatchmakingResponse": {
-        "type": "object",
-        "required": ["necessidade_id", "total_recomendados", "recomendacoes"],
-        "properties": {
-          "necessidade_id": { "type": "string", "format": "uuid" },
-          "total_recomendados": { "type": "integer" },
-          "recomendacoes": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/MatchRecomendado" }
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "verificada": {
+            "type": "boolean",
+            "title": "Verificada"
+          },
+          "contato": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
           }
-        }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "cnpj",
+          "verificada",
+          "contato",
+          "criado_em"
+        ],
+        "title": "InstituicaoOut"
+      },
+      "InstituicaoUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "verificada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verificada"
+          },
+          "contato": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato"
+          }
+        },
+        "type": "object",
+        "title": "InstituicaoUpdate",
+        "description": "Atualização parcial de uma instituição."
       },
       "MatchRecomendado": {
-        "type": "object",
-        "required": ["vinculo_id", "score_match", "distancia_km"],
         "properties": {
-          "vinculo_id": { "type": "string", "format": "uuid" },
-          "score_match": { "type": "number" },
-          "distancia_km": { "type": "number" }
-        }
+          "vinculo_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vinculo Id"
+          },
+          "voluntario": {
+            "$ref": "#/components/schemas/VoluntarioPublico"
+          },
+          "score_match": {
+            "type": "number",
+            "title": "Score Match",
+            "description": "Score composto entre 0 e 1."
+          },
+          "habilidades_correspondentes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Habilidades Correspondentes"
+          },
+          "distancia_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distancia Km"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusVinculo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vinculo_id",
+          "voluntario",
+          "score_match",
+          "habilidades_correspondentes",
+          "distancia_km",
+          "status"
+        ],
+        "title": "MatchRecomendado",
+        "description": "Recomendação individual retornada pelo matchmaking."
+      },
+      "MatchmakingResponse": {
+        "properties": {
+          "necessidade_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Necessidade Id"
+          },
+          "nivel_urgencia": {
+            "$ref": "#/components/schemas/NivelUrgencia"
+          },
+          "total_recomendados": {
+            "type": "integer",
+            "title": "Total Recomendados"
+          },
+          "recomendacoes": {
+            "items": {
+              "$ref": "#/components/schemas/MatchRecomendado"
+            },
+            "type": "array",
+            "title": "Recomendacoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "necessidade_id",
+          "nivel_urgencia",
+          "total_recomendados",
+          "recomendacoes"
+        ],
+        "title": "MatchmakingResponse"
+      },
+      "NecessidadeCreate": {
+        "properties": {
+          "descricao_crise": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Descricao Crise",
+            "description": "Descrição em linguagem natural da situação de crise, necessidades percebidas e contexto.",
+            "example": "Enchente atingiu nosso abrigo comunitário no bairro Vila Nova. Precisamos urgente de atendimento médico para idosos e ajuda para resgate de famílias ilhadas."
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco",
+            "example": "Rua das Flores, 123 - Vila Nova, São Paulo - SP"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90,
+                "minimum": -90
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180,
+                "minimum": -180
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "nivel_urgencia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NivelUrgencia"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nível de urgência. Se omitido, será inferido pelo watsonx.ai a partir da descrição.",
+            "example": "critico"
+          },
+          "instituicao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instituicao Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "descricao_crise"
+        ],
+        "title": "NecessidadeCreate",
+        "description": "Registro de uma necessidade emergencial a partir de relato livre da\ninstituição ou coordenador."
+      },
+      "NecessidadeOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "instituicao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instituicao Id"
+          },
+          "descricao_crise": {
+            "type": "string",
+            "title": "Descricao Crise"
+          },
+          "habilidades_requeridas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Habilidades Requeridas"
+          },
+          "endereco_texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco Texto"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "nivel_urgencia": {
+            "$ref": "#/components/schemas/NivelUrgencia"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusNecessidade"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "instituicao_id",
+          "descricao_crise",
+          "habilidades_requeridas",
+          "endereco_texto",
+          "latitude",
+          "longitude",
+          "nivel_urgencia",
+          "status",
+          "criado_em"
+        ],
+        "title": "NecessidadeOut"
+      },
+      "NivelUrgencia": {
+        "type": "string",
+        "enum": [
+          "baixo",
+          "medio",
+          "alto",
+          "critico"
+        ],
+        "title": "NivelUrgencia"
+      },
+      "StatusNecessidade": {
+        "type": "string",
+        "enum": [
+          "aberta",
+          "em_atendimento",
+          "resolvida",
+          "cancelada"
+        ],
+        "title": "StatusNecessidade"
+      },
+      "StatusVinculo": {
+        "type": "string",
+        "enum": [
+          "proposto",
+          "aceito",
+          "recusado",
+          "em_atendimento",
+          "concluido",
+          "cancelado"
+        ],
+        "title": "StatusVinculo"
+      },
+      "StatusVoluntario": {
+        "type": "string",
+        "enum": [
+          "disponivel",
+          "ocupado",
+          "em_missao",
+          "inativo"
+        ],
+        "title": "StatusVoluntario"
       },
       "TaskAceita": {
-        "type": "object",
-        "required": ["task_id", "resource_id", "mensagem"],
         "properties": {
-          "task_id": { "type": "string", "format": "uuid" },
-          "resource_id": { "type": "string", "format": "uuid" },
-          "mensagem": { "type": "string", "example": "Processamento iniciado." }
-        }
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "resource_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resource Id"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem",
+            "example": "Cadastro recebido — enriquecimento em andamento."
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "resource_id",
+          "mensagem"
+        ],
+        "title": "TaskAceita",
+        "description": "Resposta 202 Accepted padrão."
       },
-      "EstatisticasOut": {
-        "type": "object",
-        "required": ["total_voluntarios", "voluntarios_disponiveis", "total_necessidades"],
+      "ValidationError": {
         "properties": {
-          "total_voluntarios": { "type": "integer" },
-          "voluntarios_disponiveis": { "type": "integer" },
-          "total_necessidades": { "type": "integer" }
-        }
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VinculoCreate": {
+        "properties": {
+          "necessidade_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Necessidade Id",
+            "description": "ID da necessidade para a qual se deseja encontrar voluntários."
+          },
+          "top_n": {
+            "type": "integer",
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Top N",
+            "description": "Quantidade máxima de voluntários a recomendar.",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": [
+          "necessidade_id"
+        ],
+        "title": "VinculoCreate",
+        "description": "Solicitação de matchmaking para uma necessidade já registrada."
+      },
+      "VinculoOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "necessidade_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Necessidade Id"
+          },
+          "voluntario_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Voluntario Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusVinculo"
+          },
+          "score_match": {
+            "type": "number",
+            "title": "Score Match"
+          },
+          "habilidades_correspondentes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Habilidades Correspondentes"
+          },
+          "distancia_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distancia Km"
+          },
+          "proposto_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Proposto Em"
+          },
+          "aceito_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aceito Em"
+          },
+          "concluido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "necessidade_id",
+          "voluntario_id",
+          "status",
+          "score_match",
+          "habilidades_correspondentes",
+          "distancia_km",
+          "proposto_em",
+          "aceito_em",
+          "concluido_em"
+        ],
+        "title": "VinculoOut",
+        "description": "Visão completa de um vínculo — expõe contato após aceite."
+      },
+      "VoluntarioCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Nome",
+            "example": "Ana Carolina Silva"
+          },
+          "telefone": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 8,
+            "title": "Telefone",
+            "example": "(11) 98765-4321"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "example": "ana.silva@email.com"
+          },
+          "relato": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Relato",
+            "description": "Relato livre do voluntário descrevendo suas competências, experiências e disponibilidade. Pode incluir profissão, cursos, horários disponíveis e restrições.",
+            "example": "Sou enfermeira há 10 anos, moro na zona sul de São Paulo. Tenho experiência com primeiros socorros e atendimento emergencial. Disponível nos fins de semana."
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco",
+            "description": "Endereço textual do voluntário para geocodificação.",
+            "example": "Av. Paulista, 1000 - Bela Vista, São Paulo - SP"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90,
+                "minimum": -90
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude",
+            "example": -23.5617
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180,
+                "minimum": -180
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude",
+            "example": -46.6559
+          },
+          "consentimento_lgpd": {
+            "type": "boolean",
+            "title": "Consentimento Lgpd",
+            "description": "Consentimento explícito para o tratamento de dados pessoais conforme a LGPD.",
+            "example": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "telefone",
+          "relato",
+          "consentimento_lgpd"
+        ],
+        "title": "VoluntarioCreate",
+        "description": "Cadastro de voluntário a partir de relato livre em linguagem natural.\n\nO texto em `relato` é enviado ao watsonx.ai (Granite) para extração\nde habilidades normalizadas contra a taxonomia controlada."
+      },
+      "VoluntarioOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telefone": {
+            "type": "string",
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "habilidades": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Habilidades"
+          },
+          "endereco_texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco Texto"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "disponibilidade": {
+            "$ref": "#/components/schemas/StatusVoluntario"
+          },
+          "reputacao": {
+            "type": "number",
+            "title": "Reputacao"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "telefone",
+          "email",
+          "habilidades",
+          "endereco_texto",
+          "latitude",
+          "longitude",
+          "disponibilidade",
+          "reputacao",
+          "criado_em"
+        ],
+        "title": "VoluntarioOut"
+      },
+      "VoluntarioPublico": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "iniciais": {
+            "type": "string",
+            "title": "Iniciais",
+            "description": "Apenas iniciais do nome (ex.: 'A. C. S.')"
+          },
+          "habilidades": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Habilidades"
+          },
+          "reputacao": {
+            "type": "number",
+            "title": "Reputacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "iniciais",
+          "habilidades",
+          "reputacao"
+        ],
+        "title": "VoluntarioPublico",
+        "description": "Versão reduzida exposta antes do aceite de vínculo (LGPD)."
+      },
+      "VoluntarioUpdate": {
+        "properties": {
+          "disponibilidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusVoluntario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40,
+                "minLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "habilidades": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Habilidades",
+            "description": "Lista de códigos da taxonomia (ex.: 'saude.primeiros_socorros')."
+          }
+        },
+        "type": "object",
+        "title": "VoluntarioUpdate",
+        "description": "Atualização parcial de perfil do voluntário."
+      },
+      "VoluntarioVerificacao": {
+        "properties": {
+          "existe": {
+            "type": "boolean",
+            "title": "Existe",
+            "description": "Indica se já existe voluntário com algum dos identificadores informados."
+          },
+          "campos_duplicados": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Campos Duplicados",
+            "description": "Campos que coincidem com o cadastro existente (ex.: ['telefone', 'email'])."
+          },
+          "voluntario_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voluntario Id",
+            "description": "ID interno do voluntário existente, quando `existe=True`. Não expõe dados pessoais."
+          }
+        },
+        "type": "object",
+        "required": [
+          "existe"
+        ],
+        "title": "VoluntarioVerificacao",
+        "description": "Resultado da verificação de duplicidade de cadastro de voluntário."
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Verificação de saúde da API."
+    },
+    {
+      "name": "Voluntários",
+      "description": "Cadastro e gestão de voluntários."
+    },
+    {
+      "name": "Instituições",
+      "description": "Cadastro e gestão de instituições parceiras."
+    },
+    {
+      "name": "Necessidades",
+      "description": "Registro de demandas de crise."
+    },
+    {
+      "name": "Vínculos",
+      "description": "Matchmaking e ciclo de vida dos vínculos."
+    },
+    {
+      "name": "Estatísticas",
+      "description": "Métricas agregadas da plataforma."
+    },
+    {
+      "name": "Dev / Demo",
+      "description": "Endpoints auxiliares para demonstração — não usar em produção."
+    }
+  ]
 }

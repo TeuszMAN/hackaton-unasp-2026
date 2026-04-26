@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchHelp — Instituições</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../asset/css/style-home.css" />
+</head>
+<body>
+  <div class="mh-shell">
+    <header class="mh-topbar">
+      <div class="mh-brand">
+        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+        <div>
+          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
+          <div class="mh-brand-sub">Instituições</div>
+        </div>
+      </div>
+      <nav class="mh-topnav">
+        <a href="home.html">Início</a>
+        <a href="voluntarios.html">Voluntários</a>
+        <a href="instituicoes.html" class="active">Instituições</a>
+        <a href="chamados.html">Chamados</a>
+      </nav>
+    </header>
+
+    <main class="mh-main">
+      <a href="home.html" class="mh-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Voltar ao painel</a>
+      <div class="mh-page-header">
+        <div>
+          <h1>Instituições</h1>
+          <p>Organizações cadastradas que abrem chamados na plataforma.</p>
+        </div>
+        <button class="mh-btn ghost" onclick="carregar()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar</button>
+      </div>
+
+      <div class="mh-toolbar">
+        <input id="busca" class="mh-input" type="text" placeholder="Buscar por nome ou CNPJ..." />
+        <select id="filtroVerificada" class="mh-select">
+          <option value="">Todas</option>
+          <option value="sim">Verificadas</option>
+          <option value="nao">Não verificadas</option>
+        </select>
+      </div>
+
+      <div id="erro" class="mh-error" style="display:none"></div>
+      <div id="lista" class="mh-list">
+        <div class="mh-empty">Carregando instituições...</div>
+      </div>
+    </main>
+
+    <footer class="mh-footer">
+      MatchHelp · API: <code id="api-url">—</code>
+    </footer>
+  </div>
+
+  <script src="../asset/js/api-config.js"></script>
+  <script>
+    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+    let cache = [];
+
+    function render() {
+      const q = document.getElementById("busca").value.trim().toLowerCase();
+      const ver = document.getElementById("filtroVerificada").value;
+      const filtrados = cache.filter(i => {
+        if (q && !((i.nome || "").toLowerCase().includes(q) || (i.cnpj || "").toLowerCase().includes(q))) return false;
+        if (ver === "sim" && !i.verificada) return false;
+        if (ver === "nao" && i.verificada) return false;
+        return true;
+      });
+      const lista = document.getElementById("lista");
+      if (!filtrados.length) {
+        lista.innerHTML = `<div class="mh-empty">Nenhuma instituição encontrada.</div>`;
+        return;
+      }
+      lista.innerHTML = filtrados.map(i => {
+        const c = i.contato || {};
+        return `
+          <div class="mh-row">
+            <div>
+              <div class="title">${i.nome || "—"}</div>
+              <div class="meta">
+                ${i.cnpj ? `<span><i data-lucide="id-card" style="width:12px;height:12px"></i>${i.cnpj}</span>` : ""}
+                ${c.email ? `<span><i data-lucide="mail" style="width:12px;height:12px"></i>${c.email}</span>` : ""}
+                ${c.telefone ? `<span><i data-lucide="phone" style="width:12px;height:12px"></i>${c.telefone}</span>` : ""}
+                ${c.cidade ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i>${c.cidade}</span>` : ""}
+              </div>
+            </div>
+            <div class="right">
+              ${i.verificada ? `<span class="mh-badge green">Verificada</span>` : `<span class="mh-badge slate">Pendente</span>`}
+            </div>
+          </div>
+        `;
+      }).join("");
+      lucide.createIcons();
+    }
+
+    async function carregar() {
+      const erro = document.getElementById("erro");
+      erro.style.display = "none";
+      try {
+        const data = await window.matchhelpFetch("/api/v1/instituicoes");
+        cache = Array.isArray(data) ? data : (data.items || []);
+        render();
+      } catch (e) {
+        // fallback: o endpoint pode ainda não existir; mostra mensagem amigável
+        cache = [];
+        erro.style.display = "block";
+        erro.innerText = "Não foi possível carregar instituições (" + e.message + "). Verifique se o endpoint /api/v1/instituicoes existe na API.";
+        document.getElementById("lista").innerHTML = `<div class="mh-empty">Sem dados para exibir.</div>`;
+      }
+    }
+
+    document.getElementById("busca").addEventListener("input", render);
+    document.getElementById("filtroVerificada").addEventListener("change", render);
+
+    lucide.createIcons();
+    carregar();
+  </script>
+</body>
+</html>

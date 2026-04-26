@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchHelp — Chamados</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../asset/css/style-home.css" />
+</head>
+<body>
+  <div class="mh-shell">
+    <header class="mh-topbar">
+      <div class="mh-brand">
+        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+        <div>
+          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
+          <div class="mh-brand-sub">Chamados / Desastres</div>
+        </div>
+      </div>
+      <nav class="mh-topnav">
+        <a href="home.html">Início</a>
+        <a href="voluntarios.html">Voluntários</a>
+        <a href="instituicoes.html">Instituições</a>
+        <a href="chamados.html" class="active">Chamados</a>
+      </nav>
+    </header>
+
+    <main class="mh-main">
+      <a href="home.html" class="mh-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Voltar ao painel</a>
+      <div class="mh-page-header">
+        <div>
+          <h1>Chamados de crise</h1>
+          <p>Necessidades registradas pelas instituições — em ordem de urgência.</p>
+        </div>
+        <button class="mh-btn ghost" onclick="carregar()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar</button>
+      </div>
+
+      <div class="mh-toolbar">
+        <input id="busca" class="mh-input" type="text" placeholder="Buscar na descrição..." />
+        <select id="filtroStatus" class="mh-select">
+          <option value="">Todos os status</option>
+          <option value="aberta">Aberta</option>
+          <option value="em_atendimento">Em atendimento</option>
+          <option value="concluida">Concluída</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+        <select id="filtroUrgencia" class="mh-select">
+          <option value="">Qualquer urgência</option>
+          <option value="critica">Crítica</option>
+          <option value="alta">Alta</option>
+          <option value="media">Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+
+      <div id="erro" class="mh-error" style="display:none"></div>
+      <div id="lista" class="mh-list">
+        <div class="mh-empty">Carregando chamados...</div>
+      </div>
+    </main>
+
+    <footer class="mh-footer">
+      MatchHelp · API: <code id="api-url">—</code>
+    </footer>
+  </div>
+
+  <script src="../asset/js/api-config.js"></script>
+  <script>
+    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+    let cache = [];
+
+    function badgeUrg(u) {
+      const map = { critica: "red", alta: "red", media: "amber", baixa: "slate" };
+      return `<span class="mh-badge ${map[u] || "slate"}">${u || "—"}</span>`;
+    }
+    function badgeStatus(s) {
+      const map = { aberta: "amber", em_atendimento: "amber", concluida: "green", cancelada: "slate" };
+      const txt = (s || "—").replace("_", " ");
+      return `<span class="mh-badge ${map[s] || "slate"}">${txt}</span>`;
+    }
+
+    function render() {
+      const q = document.getElementById("busca").value.trim().toLowerCase();
+      const st = document.getElementById("filtroStatus").value;
+      const ur = document.getElementById("filtroUrgencia").value;
+      const filtrados = cache.filter(n => {
+        if (q && !(n.descricao_crise || "").toLowerCase().includes(q)) return false;
+        if (st && n.status !== st) return false;
+        if (ur && n.nivel_urgencia !== ur) return false;
+        return true;
+      });
+      const lista = document.getElementById("lista");
+      if (!filtrados.length) {
+        lista.innerHTML = `<div class="mh-empty">Nenhum chamado encontrado.</div>`;
+        return;
+      }
+      lista.innerHTML = filtrados.map(n => `
+        <div class="mh-row">
+          <div>
+            <div class="title">${(n.descricao_crise || "").slice(0, 120)}${(n.descricao_crise || "").length > 120 ? "..." : ""}</div>
+            <div class="meta">
+              ${n.endereco_texto ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i>${n.endereco_texto}</span>` : ""}
+              ${n.criado_em ? `<span><i data-lucide="clock" style="width:12px;height:12px"></i>${new Date(n.criado_em).toLocaleString("pt-BR")}</span>` : ""}
+            </div>
+            ${(n.habilidades_requeridas || []).length ? `<div class="mh-chips">${n.habilidades_requeridas.map(h => `<span class="mh-chip">${h}</span>`).join("")}</div>` : ""}
+          </div>
+          <div class="right" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            ${badgeUrg(n.nivel_urgencia)}
+            ${badgeStatus(n.status)}
+          </div>
+        </div>
+      `).join("");
+      lucide.createIcons();
+    }
+
+    async function carregar() {
+      const erro = document.getElementById("erro");
+      erro.style.display = "none";
+      try {
+        const data = await window.matchhelpFetch("/api/v1/necessidades");
+        cache = Array.isArray(data) ? data : (data.items || []);
+        const ordemU = { critica: 0, alta: 1, media: 2, baixa: 3 };
+        cache.sort((a, b) => (ordemU[a.nivel_urgencia] ?? 9) - (ordemU[b.nivel_urgencia] ?? 9));
+        render();
+      } catch (e) {
+        erro.style.display = "block";
+        erro.innerText = "Falha ao carregar chamados: " + e.message;
+        document.getElementById("lista").innerHTML = "";
+      }
+    }
+
+    ["busca","filtroStatus","filtroUrgencia"].forEach(id => {
+      document.getElementById(id).addEventListener("input", render);
+      document.getElementById(id).addEventListener("change", render);
+    });
+
+    lucide.createIcons();
+    carregar();
+  </script>
+</body>
+</html>

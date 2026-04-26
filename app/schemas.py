@@ -107,6 +107,20 @@ class VoluntarioPublico(BaseModel):
     reputacao: float
 
 
+class VoluntarioVerificacao(BaseModel):
+    """Resultado da verificação de duplicidade de cadastro de voluntário."""
+
+    existe: bool = Field(..., description="Indica se já existe voluntário com algum dos identificadores informados.")
+    campos_duplicados: list[str] = Field(
+        default_factory=list,
+        description="Campos que coincidem com o cadastro existente (ex.: ['telefone', 'email']).",
+    )
+    voluntario_id: uuid.UUID | None = Field(
+        None,
+        description="ID interno do voluntário existente, quando `existe=True`. Não expõe dados pessoais.",
+    )
+
+
 # ===========================================================================
 # Necessidades
 # ===========================================================================

@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -61,13 +61,30 @@ async def _enriquecer_voluntario(voluntario_id: uuid.UUID) -> None:
     "",
     status_code=status.HTTP_202_ACCEPTED,
     response_model=schemas.TaskAceita,
+    responses={
+        409: {
+            "description": "Voluntário já cadastrado com o mesmo telefone ou e-mail.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": (
+                            "Voluntário já cadastrado com este telefone. "
+                            "Não é permitido cadastrar o mesmo voluntário duas vezes. "
+                            "Utilize o ID existente: <uuid>"
+                        )
+                    }
+                }
+            },
+        }
+    },
     summary="Cadastrar voluntário (assíncrono)",
     description=(
         "Recebe um relato livre do voluntário e dispara, em background, a "
         "extração de habilidades via watsonx.ai (Granite) e a geocodificação "
         "do endereço. Retorna imediatamente 202 com o `task_id` e o `resource_id` "
         "(id do voluntário) — consulte `GET /api/v1/voluntarios/{id}` para "
-        "acompanhar o enriquecimento."
+        "acompanhar o enriquecimento. "
+        "Retorna 409 se já existe um voluntário com o mesmo telefone ou e-mail."
     ),
 )
 def cadastrar_voluntario(
@@ -79,6 +96,25 @@ def cadastrar_voluntario(
         raise HTTPException(
             status_code=400,
             detail="Consentimento LGPD explícito é obrigatório para cadastro.",
+        )
+
+    filtros = [models.Voluntario.telefone == payload.telefone]
+    if payload.email:
+        filtros.append(models.Voluntario.email == payload.email)
+
+    duplicado = db.execute(
+        select(models.Voluntario).where(or_(*filtros)).limit(1)
+    ).scalar_one_or_none()
+
+    if duplicado is not None:
+        campo = "e-mail" if payload.email and duplicado.email == payload.email else "telefone"
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Voluntário já cadastrado com este {campo}. "
+                "Não é permitido cadastrar o mesmo voluntário duas vezes. "
+                f"Utilize o ID existente: {duplicado.id}"
+            ),
         )
 
     voluntario = models.Voluntario(
@@ -130,6 +166,62 @@ def listar_voluntarios(
         stmt = stmt.where(models.Voluntario.habilidades.any(habilidade))
     stmt = stmt.limit(limit).order_by(models.Voluntario.criado_em.desc())
     return list(db.execute(stmt).scalars().all())
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/voluntarios/verificar
+# ---------------------------------------------------------------------------
+@router.get(
+    "/verificar",
+    response_model=schemas.VoluntarioVerificacao,
+    summary="Verificar duplicidade de cadastro",
+    description=(
+        "Consulta se já existe voluntário cadastrado com algum dos identificadores "
+        "informados (telefone, nome ou email). Retorna apenas a indicação de "
+        "duplicidade e o ID interno — NÃO expõe dados pessoais. Deve ser usado "
+        "pelo agente antes de chamar `POST /api/v1/voluntarios`."
+    ),
+)
+def verificar_voluntario(
+    telefone: str | None = Query(None, min_length=8, max_length=40),
+    nome: str | None = Query(None, min_length=2, max_length=200),
+    email: str | None = Query(None, max_length=200),
+    db: Session = Depends(get_db),
+):
+    filtros = []
+    if telefone:
+        filtros.append(models.Voluntario.telefone == telefone)
+    if email:
+        filtros.append(models.Voluntario.email == email)
+    if nome:
+        filtros.append(models.Voluntario.nome.ilike(nome))
+
+    if not filtros:
+        raise HTTPException(
+            status_code=400,
+            detail="Informe ao menos um dos parâmetros: telefone, nome ou email.",
+        )
+
+    existente = db.execute(
+        select(models.Voluntario).where(or_(*filtros)).limit(1)
+    ).scalar_one_or_none()
+
+    if existente is None:
+        return schemas.VoluntarioVerificacao(existe=False, campos_duplicados=[], voluntario_id=None)
+
+    duplicados: list[str] = []
+    if telefone and existente.telefone == telefone:
+        duplicados.append("telefone")
+    if email and existente.email == email:
+        duplicados.append("email")
+    if nome and existente.nome and existente.nome.lower() == nome.lower():
+        duplicados.append("nome")
+
+    return schemas.VoluntarioVerificacao(
+        existe=True,
+        campos_duplicados=duplicados,
+        voluntario_id=existente.id,
+    )
 
 
 # ---------------------------------------------------------------------------
