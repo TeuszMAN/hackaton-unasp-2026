@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+:root {
+    --mh-blue: #2b529a;
+    --mh-orange: #f69331;
+    --mh-teal: #37a991;
+    --mh-lightblue: #1b91f6;
+    --mh-purple: #7a52cc;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, var(--mh-orange), var(--mh-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: all 0.4s ease;
+}
+
+/* Ajustes de contraste para o Spotlight */
+.spotlight-active .gradient-text {
+    background: linear-gradient(90deg, var(--mh-orange), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.spotlight-active h1,
+.spotlight-active header p,
+.spotlight-active .text-slate-500 {
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Camada de Spotlight (Fundo escuro) */
+#spotlight-overlay {
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    z-index: 9990;
+}
+
+/* Garante que o chat da IBM fique por cima do fundo escuro */
+#ibm-chat-portal,
+.ibm-web-chat-container,
+#WAI-launcher-container {
+    position: relative;
+    z-index: 9999 !important;
+}
+
+/* Efeito de pulsação usando Laranja */
+.spotlight-active #ibm-chat-portal {
+    box-shadow: 0 0 0 10px rgba(246, 147, 49, 0.2);
+    border-radius: 50%;
+    animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+    0% {
+        box-shadow: 0 0 0 0px rgba(246, 147, 49, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(246, 147, 49, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0px rgba(246, 147, 49, 0);
+    }
+}

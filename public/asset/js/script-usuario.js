@@ -28,8 +28,7 @@ function activateSpotlight() {
         }
       }
 
-      // Fallback visual: Verifica se existe algum iframe de chat visível que não seja apenas a bolha
-      // Isso ajuda se a API do Watson estiver lenta para responder
+      // Fallback visual
       const launcherOpen =
         document.querySelector(".WxoMain-container") ||
         document.querySelector(".ea-chat-container") ||
@@ -75,7 +74,7 @@ document.addEventListener(
   true,
 );
 
-// Configuração do Chat
+// Configuração do Chat IBM Watson Orchestrate
 window.wxOConfiguration = {
   orchestrationID:
     "3d7ed1c2090b4b5e9bcdead3a89d1f60_6f41ae2b-4456-4224-96b4-69de8e405c58",
@@ -108,6 +107,7 @@ window.wxOConfiguration = {
   },
 };
 
+// Injeção do Loader do Chat
 (function () {
   const chatDiv = document.createElement("div");
   chatDiv.id = "ibm-chat-portal";
