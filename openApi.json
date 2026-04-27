@@ -8,10 +8,10 @@
     },
     "version": "0.2.0"
   },
-    "servers": [
+  "servers": [
     {
-      "url": "https://coveting-economy-tingling.ngrok-free.dev",
-      "description": "Servidor Local via ngrok"
+      "url": "http://192.241.151.209:8000",
+      "description": "Servidor via VPS"
     }
   ],
   "paths": {
@@ -28,9 +28,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-
-                }
+                "schema": {}
               }
             }
           }
@@ -1059,9 +1057,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-
-                }
+                "schema": {}
               }
             }
           }
@@ -1081,9 +1077,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-
-                }
+                "schema": {}
               }
             }
           }

@@ -10,6 +10,11 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackathon -d voluntariado_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build: .
@@ -21,7 +26,8 @@ services:
     environment:
       DATABASE_URL: postgresql://hackathon:hackathon123@db:5432/voluntariado_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   pgadmin:
     image: dpage/pgadmin4:latest
