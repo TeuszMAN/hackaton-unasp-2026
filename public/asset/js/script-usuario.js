@@ -28,7 +28,8 @@ function activateSpotlight() {
         }
       }
 
-      // Fallback visual
+      // Fallback visual: Verifica se existe algum iframe de chat visível que não seja apenas a bolha
+      // Isso ajuda se a API do Watson estiver lenta para responder
       const launcherOpen =
         document.querySelector(".WxoMain-container") ||
         document.querySelector(".ea-chat-container") ||
@@ -74,38 +75,26 @@ document.addEventListener(
   true,
 );
 
-// Configuração do Chat IBM Watson Orchestrate
+// Configuração do Chat
 window.wxOConfiguration = {
   orchestrationID:
     "3d7ed1c2090b4b5e9bcdead3a89d1f60_6f41ae2b-4456-4224-96b4-69de8e405c58",
-
   hostURL: "https://au-syd.watson-orchestrate.cloud.ibm.com",
-
-  rootElementID: "root",
-
   deploymentPlatform: "ibmcloud",
-
   crn: "crn:v1:bluemix:public:watsonx-orchestrate:au-syd:a/3d7ed1c2090b4b5e9bcdead3a89d1f60:6f41ae2b-4456-4224-96b4-69de8e405c58::",
-
   chatOptions: {
-    agentId: "625d0c9e-1e0a-4097-a075-5e76e087dafe",
-
-    agentEnvironmentId: "8a47ed4b-83da-4e5a-bdbd-67245d5a62d1",
-
+    agentId: "8efb193d-a518-41dc-b248-6cf1fc73b783",
+    agentEnvironmentId: "c8ee69af-31f9-4d5c-904e-f3b08fee9a40",
     showLauncher: true,
-
     onLoad: function (instance) {
       chatInstance = instance;
-
       instance.render();
 
       // Eventos oficiais da IBM
       instance.on({
         type: "view:change",
         handler: (event) => {
-          if (event.newViewState.isOpen) {
-            closeSpotlight();
-          }
+          if (event.newViewState.isOpen) closeSpotlight();
         },
       });
 
@@ -119,23 +108,19 @@ window.wxOConfiguration = {
   },
 };
 
-// Injeção do Loader do Chat
 (function () {
   const chatDiv = document.createElement("div");
   chatDiv.id = "ibm-chat-portal";
   document.body.appendChild(chatDiv);
 
   setTimeout(function () {
-    const script = document.createElement("script");
-
-    script.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
-
-    script.addEventListener("load", function () {
+    const s = document.createElement("script");
+    s.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js`;
+    s.onload = function () {
       if (window.wxoLoader) {
         window.wxoLoader.init();
       }
-    });
-
-    document.head.appendChild(script);
-  }, 0);
+    };
+    document.head.appendChild(s);
+  }, 300);
 })();
