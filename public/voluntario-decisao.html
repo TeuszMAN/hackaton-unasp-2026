@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchHelp — Acionamento</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../asset/css/style-home.css" />
+</head>
+<body>
+  <div class="mh-shell">
+    <header class="mh-topbar">
+      <div class="mh-brand">
+        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+        <div>
+          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
+          <div class="mh-brand-sub">Acionamento de voluntário</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mh-main" style="max-width:640px;margin:0 auto">
+      <div id="erro" class="mh-error" style="display:none"></div>
+      <div id="conteudo">
+        <div class="mh-empty">Carregando acionamento...</div>
+      </div>
+    </main>
+
+    <footer class="mh-footer">
+      MatchHelp · API: <code id="api-url">—</code>
+    </footer>
+  </div>
+
+  <script src="../asset/js/api-config.js"></script>
+  <script>
+    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+
+    const params = new URLSearchParams(location.search);
+    const vinculoId = params.get("vinculo");
+
+    function badgeUrg(u) {
+      const map = { critico: "red", alto: "red", medio: "amber", baixo: "slate" };
+      return `<span class="mh-badge ${map[u] || "slate"}">${u || "—"}</span>`;
+    }
+
+    function mostrarErro(msg) {
+      const erro = document.getElementById("erro");
+      erro.style.display = "block";
+      erro.innerText = msg;
+    }
+    function limparErro() {
+      document.getElementById("erro").style.display = "none";
+    }
+
+    async function carregar() {
+      if (!vinculoId) {
+        mostrarErro("Link inválido — parâmetro 'vinculo' ausente.");
+        document.getElementById("conteudo").innerHTML = "";
+        return;
+      }
+      try {
+        const vinculo = await window.matchhelpFetch(`/api/v1/vinculos/${vinculoId}`);
+        const necessidade = await window.matchhelpFetch(`/api/v1/necessidades/${vinculo.necessidade_id}`);
+        renderTela(vinculo, necessidade);
+      } catch (e) {
+        mostrarErro("Falha ao carregar acionamento: " + e.message);
+        document.getElementById("conteudo").innerHTML = "";
+      }
+    }
+
+    function renderTela(vinculo, necessidade) {
+      const conteudo = document.getElementById("conteudo");
+      const status = vinculo.status;
+
+      if (status === "aceito" || status === "em_atendimento") {
+        conteudo.innerHTML = telaConfirmado(necessidade);
+        lucide.createIcons();
+        return;
+      }
+      if (status === "recusado" || status === "cancelado" || status === "rejeitado") {
+        conteudo.innerHTML = telaEncerrado(status);
+        lucide.createIcons();
+        return;
+      }
+      if (status === "concluido") {
+        conteudo.innerHTML = `<div class="mh-empty">Este acionamento já foi concluído. Obrigado!</div>`;
+        return;
+      }
+      if (status !== "proposto") {
+        conteudo.innerHTML = `<div class="mh-empty">Este acionamento ainda está aguardando aprovação institucional. Volte mais tarde.</div>`;
+        return;
+      }
+
+      const skills = (vinculo.habilidades_correspondentes || []).map(h => `<span class="mh-chip">${h}</span>`).join("");
+      const dist = vinculo.distancia_km != null
+        ? (vinculo.distancia_km < 1 ? `${Math.round(vinculo.distancia_km * 1000)} m` : `${vinculo.distancia_km.toFixed(1)} km`)
+        : "distância n/d";
+
+      conteudo.innerHTML = `
+        <div style="text-align:center;margin:20px 0 12px">
+          <div style="display:inline-block;width:56px;height:56px;border-radius:14px;background:var(--mh-red);color:#fff;display:inline-flex;align-items:center;justify-content:center">
+            <i data-lucide="siren" style="width:28px;height:28px"></i>
+          </div>
+        </div>
+        <h1 style="text-align:center;margin:0 0 6px">Você foi acionado para um chamado</h1>
+        <p style="text-align:center;color:var(--mh-muted);margin:0 0 20px">Sua resposta será comunicada à instituição imediatamente.</p>
+
+        <div style="border:1px solid var(--mh-line);border-radius:12px;padding:16px;background:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+            <div style="font-weight:600;font-size:15px">${necessidade.descricao_crise || "—"}</div>
+            ${badgeUrg(necessidade.nivel_urgencia)}
+          </div>
+          <div class="meta" style="display:flex;flex-direction:column;gap:6px;color:var(--mh-muted);font-size:13px;margin-bottom:10px">
+            ${necessidade.endereco_texto ? `<span><i data-lucide="map-pin" style="width:14px;height:14px;vertical-align:-2px"></i> ${necessidade.endereco_texto}</span>` : ""}
+            <span><i data-lucide="route" style="width:14px;height:14px;vertical-align:-2px"></i> Distância estimada: ${dist}</span>
+          </div>
+          ${skills ? `<div class="mh-chips" style="margin-bottom:10px">${skills}</div>` : ""}
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="mh-btn ghost" style="flex:1" onclick="acao('recusar', this)">
+            <i data-lucide="x" style="width:14px;height:14px"></i> Não posso atender
+          </button>
+          <button class="mh-btn" style="flex:1" onclick="acao('aceitar', this)">
+            <i data-lucide="check" style="width:14px;height:14px"></i> Aceitar e ir
+          </button>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    function telaConfirmado(necessidade) {
+      return `
+        <div style="text-align:center;margin:30px 0">
+          <div style="display:inline-flex;width:64px;height:64px;border-radius:16px;background:#10b981;color:#fff;align-items:center;justify-content:center;margin-bottom:14px">
+            <i data-lucide="check" style="width:32px;height:32px"></i>
+          </div>
+          <h1 style="margin:0 0 6px">Acionamento confirmado</h1>
+          <p style="color:var(--mh-muted);margin:0 0 18px">A instituição já foi notificada e aguarda a sua chegada.</p>
+          <div style="border:1px solid var(--mh-line);border-radius:12px;padding:16px;background:#fff;text-align:left">
+            <div style="font-weight:600;margin-bottom:8px">${necessidade.descricao_crise || "—"}</div>
+            ${necessidade.endereco_texto ? `<div style="color:var(--mh-muted);font-size:13px"><i data-lucide="map-pin" style="width:14px;height:14px;vertical-align:-2px"></i> ${necessidade.endereco_texto}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function telaEncerrado(status) {
+      const msg = status === "recusado"
+        ? "Você recusou este acionamento. Obrigado por sinalizar — outro voluntário poderá ser chamado."
+        : "Este acionamento foi encerrado e não está mais disponível.";
+      return `
+        <div style="text-align:center;margin:30px 0">
+          <div style="display:inline-flex;width:64px;height:64px;border-radius:16px;background:#94a3b8;color:#fff;align-items:center;justify-content:center;margin-bottom:14px">
+            <i data-lucide="info" style="width:32px;height:32px"></i>
+          </div>
+          <h1 style="margin:0 0 6px">Acionamento encerrado</h1>
+          <p style="color:var(--mh-muted)">${msg}</p>
+        </div>
+      `;
+    }
+
+    async function acao(tipo, btn) {
+      limparErro();
+      btn.disabled = true;
+      const irmao = btn.parentElement.querySelectorAll("button");
+      irmao.forEach(b => b.disabled = true);
+      try {
+        await window.matchhelpFetch(`/api/v1/vinculos/${vinculoId}/${tipo}`, { method: "POST" });
+        await carregar();
+      } catch (e) {
+        mostrarErro(`Falha ao ${tipo}: ${e.message}`);
+        irmao.forEach(b => b.disabled = false);
+      }
+    }
+
+    lucide.createIcons();
+    carregar();
+  </script>
+</body>
+</html>
