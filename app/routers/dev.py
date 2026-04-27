@@ -113,6 +113,192 @@ VOLUNTARIOS_DEMO = [
     },
 ]
 
+# ============================================================================
+# DEMO — Instituições
+# ============================================================================
+INSTITUICOES_DEMO = [
+    {
+        "nome": "Defesa Civil de São Paulo",
+        "cnpj": "12345678000101",
+        "regiao": "São Paulo - SP",
+        "verificada": True,
+        "contato": {
+            "telefone": "(11) 4000-1000",
+            "email": "contato@defesacivilsp.org",
+            "cidade": "São Paulo - SP",
+            "responsavel": "Marcos Almeida",
+        },
+    },
+    {
+        "nome": "Instituto Esperança Viva",
+        "cnpj": "22345678000102",
+        "regiao": "Guarulhos - SP",
+        "verificada": True,
+        "contato": {
+            "telefone": "(11) 4000-2000",
+            "email": "apoio@esperancaviva.org",
+            "cidade": "Guarulhos - SP",
+            "responsavel": "Fernanda Lima",
+        },
+    },
+    {
+        "nome": "ONG Mãos Unidas",
+        "cnpj": "32345678000103",
+        "regiao": "Osasco - SP",
+        "verificada": False,
+        "contato": {
+            "telefone": "(11) 4000-3000",
+            "email": "contato@maosunidas.org",
+            "cidade": "Osasco - SP",
+            "responsavel": "Carlos Eduardo",
+        },
+    },
+]
+
+# ============================================================================
+# DEMO — Crises / Necessidades
+# ============================================================================
+CRISES_DEMO = [
+    {
+        "descricao_crise": (
+            "Alagamento severo após chuva intensa deixando dezenas "
+            "de famílias desalojadas e sem acesso a alimentos."
+        ),
+        "endereco_texto": "Marginal Tietê, São Paulo - SP",
+        "nivel_urgencia": "critica",
+        "status": "aberta",
+        "habilidades_requeridas": [
+            "resgate.aquatico",
+            "saude.primeiros_socorros",
+            "logistica.abrigo",
+        ],
+    },
+    {
+        "descricao_crise": (
+            "Incêndio em comunidade com necessidade urgente de "
+            "apoio médico e distribuição de alimentos."
+        ),
+        "endereco_texto": "Heliópolis, São Paulo - SP",
+        "nivel_urgencia": "alta",
+        "status": "em_atendimento",
+        "habilidades_requeridas": [
+            "resgate.bombeiro",
+            "alimentacao.cozinha",
+            "saude.enfermagem",
+        ],
+    },
+    {
+        "descricao_crise": (
+            "Queda de energia em hospital comunitário exigindo "
+            "manutenção elétrica emergencial."
+        ),
+        "endereco_texto": "Santo André - SP",
+        "nivel_urgencia": "alta",
+        "status": "aberta",
+        "habilidades_requeridas": [
+            "construcao.eletrica",
+            "tecnologia.suporte_ti",
+        ],
+    },
+    {
+        "descricao_crise": (
+            "Abrigo temporário superlotado precisando de suporte "
+            "psicológico para crianças e idosos."
+        ),
+        "endereco_texto": "Guarulhos - SP",
+        "nivel_urgencia": "media",
+        "status": "aberta",
+        "habilidades_requeridas": [
+            "saude.psicologia",
+            "psicossocial.apoio_criancas",
+            "psicossocial.apoio_idosos",
+        ],
+    },
+]
+
+# ============================================================================
+# ROUTE — Seed Instituições + Crises
+# ============================================================================
+@router.post(
+    "/seed-demo-extra",
+    summary="[DEV] Seed de instituições e crises",
+)
+def seed_demo_extra(db: Session = Depends(get_db)):
+
+    instituicoes_criadas = 0
+    crises_criadas = 0
+
+    instituicoes_ids = []
+
+    # ----------------------------------------------------------------------
+    # Instituições
+    # ----------------------------------------------------------------------
+    for item in INSTITUICOES_DEMO:
+
+        existe = (
+            db.query(models.Instituicao)
+            .filter(models.Instituicao.nome == item["nome"])
+            .first()
+        )
+
+        if existe:
+            instituicoes_ids.append(existe.id)
+            continue
+
+        nova = models.Instituicao(
+            nome=item["nome"],
+            cnpj=item["cnpj"],
+            regiao=item["regiao"],
+            verificada=item["verificada"],
+            contato=item["contato"],
+        )
+
+        db.add(nova)
+        db.flush()
+
+        instituicoes_ids.append(nova.id)
+        instituicoes_criadas += 1
+
+    # ----------------------------------------------------------------------
+    # Crises
+    # ----------------------------------------------------------------------
+    for idx, item in enumerate(CRISES_DEMO):
+
+        existe = (
+            db.query(models.Necessidade)
+            .filter(
+                models.Necessidade.descricao_crise
+                == item["descricao_crise"]
+            )
+            .first()
+        )
+
+        if existe:
+            continue
+
+        necessidade = models.Necessidade(
+            descricao_crise=item["descricao_crise"],
+            endereco_texto=item["endereco_texto"],
+            nivel_urgencia=item["nivel_urgencia"],
+            status=item["status"],
+            habilidades_requeridas=item["habilidades_requeridas"],
+            instituicao_id=instituicoes_ids[
+                idx % len(instituicoes_ids)
+            ] if instituicoes_ids else None,
+        )
+
+        db.add(necessidade)
+        crises_criadas += 1
+
+    db.commit()
+
+    return {
+        "ok": True,
+        "instituicoes_criadas": instituicoes_criadas,
+        "crises_criadas": crises_criadas,
+    }
+
+
 
 @router.post(
     "/seed-voluntarios-exemplo",
