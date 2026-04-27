@@ -32,7 +32,17 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.detail || "Falha na autenticação");
+      let mensagemErro = "Falha na autenticação";
+
+      if (typeof data.detail === "string") {
+        mensagemErro = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        mensagemErro = data.detail.map((e) => e.msg).join(", ");
+      } else if (typeof data.detail === "object" && data.detail !== null) {
+        mensagemErro = JSON.stringify(data.detail);
+      }
+
+      throw new Error(mensagemErro);
     }
 
     localStorage.setItem("mh_token", data.token);
