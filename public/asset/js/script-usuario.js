@@ -85,6 +85,7 @@ window.wxOConfiguration = {
   chatOptions: {
     agentId: "8efb193d-a518-41dc-b248-6cf1fc73b783",
     agentEnvironmentId: "c8ee69af-31f9-4d5c-904e-f3b08fee9a40",
+    locale: "pt-BR",
     showLauncher: true,
     onLoad: function (instance) {
       chatInstance = instance;
