@@ -35,6 +35,108 @@
         }
       }
     },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Login de voluntário (login_id + senha)",
+        "description": "Autentica um voluntário usando os 8 primeiros caracteres do seu voluntario_id e a senha (temporária ou definitiva). Retorna um token de sessão a ser enviado em `Authorization: Bearer \u003Ctoken\u003E` nas próximas chamadas.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/trocar-senha": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Trocar a senha do voluntário autenticado",
+        "description": "Exige header `Authorization: Bearer \u003Ctoken\u003E`. Verifica a senha atual (temporária ou definitiva) e grava a nova senha em hash. Limpa os campos de senha temporária e zera `precisa_trocar_senha`. Retorna um novo token de sessão (rotaciona).",
+        "operationId": "trocar_senha_api_v1_auth_trocar_senha_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrocarSenhaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/voluntarios": {
       "post": {
         "tags": [
@@ -59,7 +161,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TaskAceita"
+                  "$ref": "#/components/schemas/VoluntarioCadastroAceito"
                 }
               }
             }
@@ -356,7 +458,7 @@
           "Instituições"
         ],
         "summary": "Cadastrar instituição",
-        "description": "Registra uma nova instituição parceira na plataforma.",
+        "description": "Cria uma nova instituição parceira. Retorna 409 se já existe instituição com o mesmo CNPJ.",
         "operationId": "cadastrar_instituicao_api_v1_instituicoes_post",
         "requestBody": {
           "required": true,
@@ -412,10 +514,49 @@
                   "type": "null"
                 }
               ],
-              "description": "Filtra pelo status de verificação.",
+              "description": "Filtra por status de verificação.",
               "title": "Verificada"
             },
-            "description": "Filtra pelo status de verificação."
+            "description": "Filtra por status de verificação."
+          },
+          {
+            "name": "regiao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra instituições pela região (case-insensitive, match exato ou parcial).",
+              "title": "Regiao"
+            },
+            "description": "Filtra instituições pela região (case-insensitive, match exato ou parcial)."
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Busca textual em nome ou CNPJ (case-insensitive).",
+              "title": "Busca"
+            },
+            "description": "Busca textual em nome ou CNPJ (case-insensitive)."
           },
           {
             "name": "limit",
@@ -425,7 +566,7 @@
               "type": "integer",
               "maximum": 500,
               "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -441,6 +582,79 @@
                     "$ref": "#/components/schemas/InstituicaoOut"
                   },
                   "title": "Response Listar Instituicoes Api V1 Instituicoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instituicoes/regioes": {
+      "get": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Listar regiões com instituições cadastradas",
+        "description": "Retorna a lista distinta de regiões e quantas instituições há em cada uma. O agente do Watson usa este endpoint para perguntar ao voluntário em qual região ele deseja atuar antes de listar as instituições disponíveis.",
+        "operationId": "listar_regioes_api_v1_instituicoes_regioes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RegiaoOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Regioes Api V1 Instituicoes Regioes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instituicoes/verificar": {
+      "get": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Verificar duplicidade de cadastro de instituição",
+        "description": "Consulta se já existe instituição cadastrada com o CNPJ informado. Retorna apenas a indicação de duplicidade e o ID interno — NÃO expõe dados de contato. Deve ser usado pelo agente antes de chamar `POST /api/v1/instituicoes`.",
+        "operationId": "verificar_instituicao_api_v1_instituicoes_verificar_get",
+        "parameters": [
+          {
+            "name": "cnpj",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 14,
+              "maxLength": 20,
+              "description": "CNPJ da instituição.",
+              "title": "Cnpj"
+            },
+            "description": "CNPJ da instituição."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstituicaoVerificacao"
                 }
               }
             }
@@ -505,7 +719,7 @@
           "Instituições"
         ],
         "summary": "Atualizar instituição",
-        "description": "Atualiza parcialmente os dados de uma instituição, incluindo seu status de verificação.",
+        "description": "Atualiza parcialmente os dados de uma instituição. Útil também para marcar como `verificada=true` após validação manual.",
         "operationId": "atualizar_instituicao_api_v1_instituicoes__instituicao_id__patch",
         "parameters": [
           {
@@ -557,7 +771,7 @@
           "Instituições"
         ],
         "summary": "Remover instituição",
-        "description": "Remove uma instituição. Necessidades vinculadas são excluídas em cascata (cascade delete).",
+        "description": "Remove uma instituição. Atenção: a remoção propaga em cascata para as necessidades vinculadas (conforme definido no model).",
         "operationId": "remover_instituicao_api_v1_instituicoes__instituicao_id__delete",
         "parameters": [
           {
@@ -574,6 +788,54 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instituicoes/{instituicao_id}/necessidades": {
+      "get": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Listar chamados de uma instituição",
+        "description": "Retorna todos os chamados (necessidades) registrados pela instituição informada.",
+        "operationId": "listar_necessidades_da_instituicao_api_v1_instituicoes__instituicao_id__necessidades_get",
+        "parameters": [
+          {
+            "name": "instituicao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Instituicao Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NecessidadeOut"
+                  },
+                  "title": "Response Listar Necessidades Da Instituicao Api V1 Instituicoes  Instituicao Id  Necessidades Get"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -777,6 +1039,168 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MatchmakingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/pendentes": {
+      "get": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Listar vínculos aguardando aprovação institucional",
+        "description": "Retorna os vínculos com status `aguardando_aprovacao`, agrupados por necessidade. Cada grupo lista os candidatos sugeridos pelo algoritmo, com o de menor distância marcado como `recomendado`. É a fonte da caixa de aprovação no painel.",
+        "operationId": "listar_pendentes_api_v1_vinculos_pendentes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GrupoAprovacao"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Pendentes Api V1 Vinculos Pendentes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/voluntario/{voluntario_id}": {
+      "get": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Listar vínculos de um voluntário",
+        "description": "Retorna todos os vínculos associados a um voluntário específico.",
+        "operationId": "listar_vinculos_voluntario_api_v1_vinculos_voluntario__voluntario_id__get",
+        "parameters": [
+          {
+            "name": "voluntario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Voluntario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VinculoOut"
+                  },
+                  "title": "Response Listar Vinculos Voluntario Api V1 Vinculos Voluntario  Voluntario Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/aprovar": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Instituição aprova candidato (libera para o voluntário decidir)",
+        "description": "Move o vínculo de `aguardando_aprovacao` para `proposto`. Os demais candidatos da mesma necessidade ainda em `aguardando_aprovacao` são automaticamente cancelados — só o aprovado é acionado.",
+        "operationId": "aprovar_vinculo_api_v1_vinculos__vinculo_id__aprovar_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/{vinculo_id}/rejeitar": {
+      "post": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Instituição rejeita candidato sugerido",
+        "description": "Marca um candidato como `rejeitado` (não chega ao voluntário). Não afeta os demais candidatos da mesma necessidade.",
+        "operationId": "rejeitar_vinculo_api_v1_vinculos__vinculo_id__rejeitar_post",
+        "parameters": [
+          {
+            "name": "vinculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Vinculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
                 }
               }
             }
@@ -1252,6 +1676,27 @@
         ],
         "title": "FeedbackOut"
       },
+      "GrupoAprovacao": {
+        "properties": {
+          "necessidade": {
+            "$ref": "#/components/schemas/NecessidadeResumo"
+          },
+          "candidatos": {
+            "items": {
+              "$ref": "#/components/schemas/MatchRecomendado"
+            },
+            "type": "array",
+            "title": "Candidatos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "necessidade",
+          "candidatos"
+        ],
+        "title": "GrupoAprovacao",
+        "description": "Conjunto de candidatos aguardando aprovação para uma mesma necessidade."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1287,6 +1732,20 @@
             "title": "Cnpj",
             "description": "CNPJ da instituição (opcional). Formato: XX.XXX.XXX/XXXX-XX.",
             "example": "12.345.678/0001-90"
+          },
+          "regiao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regiao",
+            "description": "Região atendida (ex.: 'Zona Sul - SP', 'Norte - Manaus').",
+            "example": "Zona Sul - SP"
           },
           "contato": {
             "anyOf": [
@@ -1335,6 +1794,17 @@
             ],
             "title": "Cnpj"
           },
+          "regiao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regiao"
+          },
           "verificada": {
             "type": "boolean",
             "title": "Verificada"
@@ -1361,6 +1831,7 @@
           "id",
           "nome",
           "cnpj",
+          "regiao",
           "verificada",
           "contato",
           "criado_em"
@@ -1394,6 +1865,18 @@
             ],
             "title": "Cnpj"
           },
+          "regiao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regiao"
+          },
           "verificada": {
             "anyOf": [
               {
@@ -1420,6 +1903,92 @@
         "type": "object",
         "title": "InstituicaoUpdate",
         "description": "Atualização parcial de uma instituição."
+      },
+      "InstituicaoVerificacao": {
+        "properties": {
+          "existe": {
+            "type": "boolean",
+            "title": "Existe",
+            "description": "Indica se já existe instituição com o CNPJ informado."
+          },
+          "instituicao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instituicao Id",
+            "description": "ID interno da instituição existente, quando `existe=True`. Não expõe dados de contato."
+          }
+        },
+        "type": "object",
+        "required": [
+          "existe"
+        ],
+        "title": "InstituicaoVerificacao",
+        "description": "Resultado da verificação de duplicidade de cadastro de instituição."
+      },
+      "LoginRequest": {
+        "properties": {
+          "login_id": {
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 8,
+            "title": "Login Id",
+            "description": "Primeiros 8 caracteres do voluntario_id."
+          },
+          "senha": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 4,
+            "title": "Senha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "login_id",
+          "senha"
+        ],
+        "title": "LoginRequest"
+      },
+      "LoginResponse": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "voluntario_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Voluntario Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "precisa_trocar_senha": {
+            "type": "boolean",
+            "title": "Precisa Trocar Senha"
+          },
+          "expira_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expira Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "voluntario_id",
+          "nome",
+          "precisa_trocar_senha",
+          "expira_em"
+        ],
+        "title": "LoginResponse"
       },
       "MatchRecomendado": {
         "properties": {
@@ -1454,8 +2023,38 @@
             ],
             "title": "Distancia Km"
           },
+          "distancia_m": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distancia M",
+            "description": "Distância em metros (arredondada). `null` quando não há coordenadas."
+          },
+          "recomendado": {
+            "type": "boolean",
+            "title": "Recomendado",
+            "description": "`True` para o voluntário marcado como recomendação primária (menor distância).",
+            "default": false
+          },
           "status": {
             "$ref": "#/components/schemas/StatusVinculo"
+          },
+          "justificativa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justificativa",
+            "description": "Frase curta gerada pela IA explicando por que o voluntário foi recomendado."
           }
         },
         "type": "object",
@@ -1672,6 +2271,48 @@
         ],
         "title": "NecessidadeOut"
       },
+      "NecessidadeResumo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "descricao_crise": {
+            "type": "string",
+            "title": "Descricao Crise"
+          },
+          "endereco_texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco Texto"
+          },
+          "nivel_urgencia": {
+            "$ref": "#/components/schemas/NivelUrgencia"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descricao_crise",
+          "endereco_texto",
+          "nivel_urgencia",
+          "criado_em"
+        ],
+        "title": "NecessidadeResumo",
+        "description": "Resumo de necessidade exibido na caixa de aprovação."
+      },
       "NivelUrgencia": {
         "type": "string",
         "enum": [
@@ -1681,6 +2322,24 @@
           "critico"
         ],
         "title": "NivelUrgencia"
+      },
+      "RegiaoOut": {
+        "properties": {
+          "regiao": {
+            "type": "string",
+            "title": "Regiao"
+          },
+          "total_instituicoes": {
+            "type": "integer",
+            "title": "Total Instituicoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regiao",
+          "total_instituicoes"
+        ],
+        "title": "RegiaoOut"
       },
       "StatusNecessidade": {
         "type": "string",
@@ -1695,9 +2354,11 @@
       "StatusVinculo": {
         "type": "string",
         "enum": [
+          "aguardando_aprovacao",
           "proposto",
           "aceito",
           "recusado",
+          "rejeitado",
           "em_atendimento",
           "concluido",
           "cancelado"
@@ -1740,6 +2401,28 @@
         ],
         "title": "TaskAceita",
         "description": "Resposta 202 Accepted padrão."
+      },
+      "TrocarSenhaRequest": {
+        "properties": {
+          "senha_atual": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 4,
+            "title": "Senha Atual"
+          },
+          "nova_senha": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 6,
+            "title": "Nova Senha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "senha_atual",
+          "nova_senha"
+        ],
+        "title": "TrocarSenhaRequest"
       },
       "ValidationError": {
         "properties": {
@@ -1886,6 +2569,50 @@
         "title": "VinculoOut",
         "description": "Visão completa de um vínculo — expõe contato após aceite."
       },
+      "VoluntarioCadastroAceito": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "voluntario_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Voluntario Id"
+          },
+          "login_id": {
+            "type": "string",
+            "title": "Login Id",
+            "description": "Identificador para login (primeiros 8 caracteres do voluntario_id)."
+          },
+          "senha_temporaria": {
+            "type": "string",
+            "title": "Senha Temporaria",
+            "description": "Senha temporária em texto claro. Válida por tempo limitado."
+          },
+          "senha_temp_expira_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Senha Temp Expira Em"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "voluntario_id",
+          "login_id",
+          "senha_temporaria",
+          "senha_temp_expira_em",
+          "mensagem"
+        ],
+        "title": "VoluntarioCadastroAceito",
+        "description": "Resposta do cadastro de voluntário.\n\nCarrega a senha temporária em texto claro — entregar somente ao próprio\nvoluntário (no chat do agente) e nunca persistir no log."
+      },
       "VoluntarioCreate": {
         "properties": {
           "nome": {
@@ -1914,6 +2641,19 @@
             ],
             "title": "Email",
             "example": "ana.silva@email.com"
+          },
+          "instituicao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instituicao Id",
+            "description": "ID da instituição à qual o voluntário está vinculado (opcional)."
           },
           "relato": {
             "type": "string",
@@ -2084,10 +2824,15 @@
             "format": "uuid",
             "title": "Id"
           },
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome completo do voluntário."
+          },
           "iniciais": {
             "type": "string",
             "title": "Iniciais",
-            "description": "Apenas iniciais do nome (ex.: 'A. C. S.')"
+            "description": "Apenas iniciais do nome (ex.: 'A. C. S.')."
           },
           "habilidades": {
             "items": {
@@ -2104,6 +2849,7 @@
         "type": "object",
         "required": [
           "id",
+          "nome",
           "iniciais",
           "habilidades",
           "reputacao"
@@ -2210,6 +2956,10 @@
     {
       "name": "Health",
       "description": "Verificação de saúde da API."
+    },
+    {
+      "name": "Autenticação",
+      "description": "Login e troca de senha do voluntário."
     },
     {
       "name": "Voluntários",

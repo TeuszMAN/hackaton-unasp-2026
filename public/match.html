@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MatchHelp — Match Inteligente</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../asset/css/style-home.css" />
+    <style>
+    /* ---- Tabs ---- */
+    .mh-tabs { display: flex; gap: 4px; margin-bottom: 24px; }
+    .mh-tab {
+      font-size: 13px; font-weight: 700; padding: 10px 20px;
+      border-radius: 10px; cursor: pointer; border: 1px solid var(--mh-line);
+      background: #fff; color: var(--mh-muted); transition: all .15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .mh-tab:hover { color: var(--mh-ink); border-color: #cbd5e1; }
+    .mh-tab.active { background: var(--mh-red); color: #fff; border-color: var(--mh-red); }
+    .mh-tab-panel { display: none; }
+    .mh-tab-panel.active { display: block; }
+
+    /* ---- Match form ---- */
+    .mh-match-form {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+      background: #fff; border: 1px solid var(--mh-line); border-radius: 14px;
+      padding: 16px 18px; margin-bottom: 20px;
+    }
+    .mh-match-form .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
+    .mh-match-form label { font-size: 11px; font-weight: 700; color: var(--mh-muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ---- Score bar ---- */
+    .mh-score-bar {
+      height: 6px; border-radius: 99px; background: var(--mh-line); overflow: hidden; margin-top: 6px; width: 120px;
+    }
+    .mh-score-bar .fill {
+      height: 100%; border-radius: 99px; transition: width .4s ease;
+    }
+
+    /* ---- Result card ---- */
+    .mh-match-card {
+      border: 1px solid var(--mh-line); border-radius: 14px; padding: 16px 18px;
+      background: #fff; transition: border-color .15s, box-shadow .15s;
+    }
+    .mh-match-card:hover { border-color: #fecaca; box-shadow: 0 8px 22px -16px rgba(15,23,42,.2); }
+    .mh-match-card.recomendado { border: 2px solid var(--mh-red); }
+    .mh-match-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .mh-match-card .card-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+    .mh-match-card .card-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+
+    /* ---- Avatar ---- */
+    .mh-avatar {
+      width: 44px; height: 44px; border-radius: 12px; background: var(--mh-red);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; flex-shrink: 0;
+    }
+    .mh-avatar.small { width: 36px; height: 36px; font-size: 12px; border-radius: 10px; }
+
+    /* ---- Stat pill ---- */
+    .mh-stat {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      font-size: 11px; color: var(--mh-muted);
+    }
+    .mh-stat .value { font-size: 16px; font-weight: 800; color: var(--mh-ink); }
+
+    /* ---- Spinner ---- */
+    .mh-spinner {
+      display: inline-block; width: 18px; height: 18px; border: 2.5px solid #fff;
+      border-right-color: transparent; border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Grupo de aprovação ---- */
+    .mh-grupo {
+      border: 1px solid var(--mh-line); border-radius: 14px; padding: 16px;
+      margin-bottom: 16px; background: #fff;
+    }
+    .mh-grupo-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 12px; margin-bottom: 12px;
+    }
+
+    /* ---- Toast ---- */
+    .mh-toast {
+      display: none; margin: 12px 0; padding: 12px 14px;
+      background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px;
+      color: #065f46; font-size: 13px;
+    }
+
+    /* ---- Justificativa IA ---- */
+    .mh-justificativa {
+      margin-top: 8px; padding: 8px 10px; background: var(--mh-red-soft);
+      border-left: 3px solid var(--mh-red); border-radius: 6px;
+      font-size: 13px; color: var(--mh-ink); font-style: italic;
+    }
+  </style>
+  </head>
+  <body>
+    <div class="mh-shell">
+      <header class="mh-topbar">
+        <div class="mh-brand">
+          <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+          <div>
+            <div class="mh-brand-name"><span
+                class="accent">Match</span>Help</div>
+            <div class="mh-brand-sub">Match Inteligente</div>
+          </div>
+        </div>
+        <nav class="mh-topnav">
+          <a href="home.html">Início</a>
+          <a href="voluntarios.html">Voluntários</a>
+          <a href="instituicoes.html">Instituições</a>
+          <a href="chamados.html">Chamados</a>
+          <a href="match.html" class="active">Match</a>
+        </nav>
+      </header>
+
+      <main class="mh-main">
+        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
+            style="width:14px;height:14px"></i> Voltar ao painel</a>
+
+        <div class="mh-page-header">
+          <div>
+            <h1>Match Inteligente</h1>
+            <p>Rode o algoritmo de correspondência ou aprove candidatos gerados
+              pelo agente.</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mh-tabs">
+          <button class="mh-tab active" data-tab="rodar"
+            onclick="trocarTab('rodar')">
+            <i data-lucide="zap" style="width:14px;height:14px"></i> Rodar Match
+          </button>
+          <button class="mh-tab" data-tab="aprovacao"
+            onclick="trocarTab('aprovacao')">
+            <i data-lucide="inbox" style="width:14px;height:14px"></i> Caixa de
+            Aprovação
+            <span id="badge-pendentes" class="mh-badge red"
+              style="display:none;margin-left:4px">0</span>
+          </button>
+        </div>
+
+        <!-- ===== TAB: RODAR MATCH ===== -->
+        <div id="tab-rodar" class="mh-tab-panel active">
+          <div class="mh-match-form">
+            <div class="field">
+              <label>Chamado (necessidade)</label>
+              <select id="selectChamado" class="mh-select"
+                style="min-width:320px">
+                <option value>Carregando chamados...</option>
+              </select>
+            </div>
+            <div class="field" style="min-width:100px;flex:0">
+              <label>Top N</label>
+              <select id="selectTopN" class="mh-select" style="min-width:80px">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
+            </div>
+            <button id="btnRodar" class="mh-btn" onclick="rodarMatch()">
+              <i data-lucide="play" style="width:14px;height:14px"></i> Rodar
+              Match
+            </button>
+          </div>
+
+          <div id="matchErro" class="mh-error" style="display:none"></div>
+          <div id="matchResultado" class="mh-list"></div>
+        </div>
+
+        <!-- ===== TAB: APROVAÇÃO ===== -->
+        <div id="tab-aprovacao" class="mh-tab-panel">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button class="mh-btn ghost" onclick="carregarPendentes()">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+              Atualizar
+            </button>
+          </div>
+          <div id="aprovacaoErro" class="mh-error" style="display:none"></div>
+          <div id="aprovacaoToast" class="mh-toast"></div>
+          <div id="aprovacaoLista" class="mh-list">
+            <div class="mh-empty">Carregando pendências...</div>
+          </div>
+        </div>
+
+      </main>
+
+      <footer class="mh-footer">
+        MatchHelp · Hackathon UNASP 2026 · API: <code id="api-url">—</code>
+      </footer>
+    </div>
+
+    <script src="../asset/js/api-config.js"></script>
+    <script>
+    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+
+    // ======================================================================
+    // Tabs
+    // ======================================================================
+    function trocarTab(nome) {
+      document.querySelectorAll('.mh-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === nome));
+      document.querySelectorAll('.mh-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + nome));
+      if (nome === 'aprovacao') carregarPendentes();
+    }
+
+    // ======================================================================
+    // Helpers
+    // ======================================================================
+    function iniciais(nome) {
+      return (nome || "").split(" ").filter(Boolean).map(p => p[0].toUpperCase()).join(". ") + ".";
+    }
+    function badgeUrg(u) {
+      const map = { critico: "red", alto: "red", medio: "amber", baixo: "slate" };
+      return `<span class="mh-badge ${map[u] || 'slate'}">${u || "—"}</span>`;
+    }
+    function fmtDist(m) {
+      if (m == null) return "n/d";
+      return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
+    }
+    function fmtDistKm(km) {
+      if (km == null) return "n/d";
+      return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+    }
+    function scoreColor(score) {
+      if (score >= 0.7) return "#10b981";
+      if (score >= 0.4) return "#f59e0b";
+      return "#ef4444";
+    }
+
+    // ======================================================================
+    // TAB 1: Rodar Match
+    // ======================================================================
+    async function carregarChamados() {
+      try {
+        const data = await window.matchhelpFetch("/api/v1/necessidades");
+        const lista = Array.isArray(data) ? data : (data.items || []);
+        const ordemU = { critico: 0, alto: 1, medio: 2, baixo: 3 };
+        lista.sort((a, b) => (ordemU[a.nivel_urgencia] ?? 9) - (ordemU[b.nivel_urgencia] ?? 9));
+        const sel = document.getElementById("selectChamado");
+        if (!lista.length) {
+          sel.innerHTML = `<option value="">Nenhum chamado encontrado</option>`;
+          return;
+        }
+        sel.innerHTML = lista.map(n => {
+          const desc = (n.descricao_crise || "").slice(0, 80);
+          const urg = (n.nivel_urgencia || "").toUpperCase();
+          return `<option value="${n.id}">[${urg}] ${desc}${(n.descricao_crise || "").length > 80 ? "..." : ""}</option>`;
+        }).join("");
+      } catch (e) {
+        document.getElementById("selectChamado").innerHTML = `<option value="">Erro ao carregar: ${e.message}</option>`;
+      }
+    }
+
+    async function rodarMatch() {
+      const necessidadeId = document.getElementById("selectChamado").value;
+      const topN = parseInt(document.getElementById("selectTopN").value);
+      const btn = document.getElementById("btnRodar");
+      const erroDiv = document.getElementById("matchErro");
+      const resultDiv = document.getElementById("matchResultado");
+
+      if (!necessidadeId) {
+        erroDiv.style.display = "block";
+        erroDiv.innerText = "Selecione um chamado primeiro.";
+        return;
+      }
+
+      erroDiv.style.display = "none";
+      btn.disabled = true;
+      btn.innerHTML = `<span class="mh-spinner"></span> Rodando...`;
+      resultDiv.innerHTML = `<div class="mh-empty">Executando matchmaking com Watson IA + algoritmo de correspondência...</div>`;
+
+      try {
+        const resp = await window.matchhelpFetch("/api/v1/vinculos", {
+          method: "POST",
+          body: { necessidade_id: necessidadeId, top_n: topN }
+        });
+
+        if (!resp.recomendacoes || !resp.recomendacoes.length) {
+          resultDiv.innerHTML = `
+            <div class="mh-empty">
+              <div style="font-size:40px;margin-bottom:12px">🔍</div>
+              <div style="font-style:normal;font-weight:600;font-size:15px;margin-bottom:8px">Nenhum voluntário encontrado</div>
+              <div>Verifique se existem voluntários com:<br>
+              ✓ status <strong>disponível</strong> · ✓ consentimento <strong>LGPD</strong> · ✓ habilidades em <strong>comum</strong> com o chamado</div>
+            </div>`;
+          return;
+        }
+
+        resultDiv.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div>
+              <span style="font-weight:800;font-size:18px">${resp.total_recomendados}</span>
+              <span style="color:var(--mh-muted);font-size:13px;margin-left:6px">candidato${resp.total_recomendados > 1 ? 's' : ''} encontrado${resp.total_recomendados > 1 ? 's' : ''}</span>
+              ${badgeUrg(resp.nivel_urgencia)}
+            </div>
+            <span style="font-size:12px;color:var(--mh-muted)">Vínculos criados com status "aguardando aprovação"</span>
+          </div>
+          <div class="mh-list">${resp.recomendacoes.map(renderMatchCard).join("")}</div>
+        `;
+        lucide.createIcons();
+
+        // Atualiza badge de pendentes
+        contarPendentes();
+
+      } catch (e) {
+        erroDiv.style.display = "block";
+        erroDiv.innerText = "Erro ao rodar matchmaking: " + e.message;
+        resultDiv.innerHTML = "";
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="play" style="width:14px;height:14px"></i> Rodar Match`;
+        lucide.createIcons();
+      }
+    }
+
+    function renderMatchCard(r, idx) {
+      const v = r.voluntario || {};
+      const ini = v.iniciais || iniciais(v.nome);
+      const skills = (r.habilidades_correspondentes || []).map(h => `<span class="mh-chip">${h}</span>`).join("");
+      const scorePct = Math.round((r.score_match || 0) * 100);
+      const color = scoreColor(r.score_match || 0);
+      const isRec = r.recomendado === true;
+
+      return `
+        <div class="mh-match-card ${isRec ? 'recomendado' : ''}">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="mh-avatar">${ini}</div>
+              <div>
+                <div style="font-weight:700;font-size:15px">
+                  ${v.nome || "—"}
+                  ${isRec ? '<span class="mh-badge red" style="margin-left:8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="star" style="width:10px;height:10px"></i>Recomendado</span>' : ''}
+                </div>
+                <div style="font-size:12px;color:var(--mh-muted);margin-top:2px">
+                  Reputação: ${(v.reputacao ?? 0).toFixed(1)}/5
+                </div>
+              </div>
+            </div>
+            <div class="mh-stat">
+              <span class="value" style="color:${color}">${scorePct}%</span>
+              <span>score</span>
+              <div class="mh-score-bar">
+                <div class="fill" style="width:${scorePct}%;background:${color}"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;gap:16px;flex-wrap:wrap">
+              <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mh-muted)">
+                <i data-lucide="map-pin" style="width:12px;height:12px"></i> ${fmtDistKm(r.distancia_km)}
+              </span>
+            </div>
+            ${skills ? `<div class="mh-chips">${skills}</div>` : ""}
+            ${r.justificativa ? `<div class="mh-justificativa"><i data-lucide="sparkles" style="width:12px;height:12px;vertical-align:-1px"></i> ${r.justificativa}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    // ======================================================================
+    // TAB 2: Caixa de Aprovação
+    // ======================================================================
+    async function contarPendentes() {
+      try {
+        const grupos = await window.matchhelpFetch("/api/v1/vinculos/pendentes");
+        const total = grupos.reduce((acc, g) => acc + (g.candidatos || []).length, 0);
+        const badge = document.getElementById("badge-pendentes");
+        if (total > 0) {
+          badge.style.display = "inline";
+          badge.textContent = total;
+        } else {
+          badge.style.display = "none";
+        }
+      } catch (_) {}
+    }
+
+    async function carregarPendentes() {
+      const erroDiv = document.getElementById("aprovacaoErro");
+      const lista = document.getElementById("aprovacaoLista");
+      erroDiv.style.display = "none";
+      lista.innerHTML = `<div class="mh-empty">Carregando pendências...</div>`;
+
+      try {
+        const grupos = await window.matchhelpFetch("/api/v1/vinculos/pendentes");
+        if (!grupos.length) {
+          lista.innerHTML = `<div class="mh-empty">
+            <div style="font-size:40px;margin-bottom:12px">✅</div>
+            <div style="font-style:normal;font-weight:600;font-size:15px">Nenhum pré-match aguardando aprovação</div>
+            <div style="margin-top:6px">Rode o match na aba anterior para gerar candidatos.</div>
+          </div>`;
+          document.getElementById("badge-pendentes").style.display = "none";
+          return;
+        }
+        lista.innerHTML = grupos.map(renderGrupo).join("");
+        lucide.createIcons();
+
+        const total = grupos.reduce((acc, g) => acc + (g.candidatos || []).length, 0);
+        const badge = document.getElementById("badge-pendentes");
+        badge.style.display = "inline";
+        badge.textContent = total;
+      } catch (e) {
+        erroDiv.style.display = "block";
+        erroDiv.innerText = "Falha ao carregar pendências: " + e.message;
+        lista.innerHTML = "";
+      }
+    }
+
+    function renderGrupo(g) {
+      const n = g.necessidade;
+      const desc = (n.descricao_crise || "").slice(0, 200);
+      const candidatos = (g.candidatos || []).map(renderCandidato).join("");
+      return `
+        <div class="mh-grupo">
+          <div class="mh-grupo-header">
+            <div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">${desc}${(n.descricao_crise || "").length > 200 ? "..." : ""}</div>
+              <div class="meta" style="display:flex;gap:12px;color:var(--mh-muted);font-size:12px">
+                ${n.endereco_texto ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i> ${n.endereco_texto}</span>` : ""}
+                ${n.criado_em ? `<span><i data-lucide="clock" style="width:12px;height:12px"></i> ${new Date(n.criado_em).toLocaleString("pt-BR")}</span>` : ""}
+              </div>
+            </div>
+            ${badgeUrg(n.nivel_urgencia)}
+          </div>
+          <div class="mh-list" style="margin-top:8px">${candidatos}</div>
+        </div>
+      `;
+    }
+
+    function renderCandidato(r) {
+      const v = r.voluntario || {};
+      const ini = v.iniciais || iniciais(v.nome);
+      const skills = (r.habilidades_correspondentes || []).map(h => `<span class="mh-chip">${h}</span>`).join("");
+      const dist = fmtDist(r.distancia_m);
+      const isRec = r.recomendado === true;
+      const scorePct = Math.round((r.score_match || 0) * 100);
+      const color = scoreColor(r.score_match || 0);
+
+      return `
+        <div class="mh-match-card ${isRec ? 'recomendado' : ''}" data-vinculo-id="${r.vinculo_id}">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="mh-avatar small">${ini}</div>
+              <div>
+                <div style="font-weight:700;font-size:14px">
+                  ${v.nome || "—"}
+                  ${isRec ? '<span class="mh-badge red" style="margin-left:6px;display:inline-flex;align-items:center;gap:3px"><i data-lucide="star" style="width:10px;height:10px"></i>Recomendado</span>' : ''}
+                </div>
+                <div style="font-size:12px;color:var(--mh-muted);display:flex;gap:12px;margin-top:2px">
+                  <span><i data-lucide="map-pin" style="width:11px;height:11px"></i> ${dist}</span>
+                  <span style="font-weight:700;color:${color}">${scorePct}% score</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${skills ? `<div class="mh-chips" style="margin-top:6px">${skills}</div>` : ""}
+          ${r.justificativa ? `<div class="mh-justificativa"><i data-lucide="sparkles" style="width:12px;height:12px;vertical-align:-1px"></i> ${r.justificativa}</div>` : ""}
+          <div class="card-actions">
+            <button class="mh-btn ghost" onclick="rejeitar('${r.vinculo_id}', this)">
+              <i data-lucide="x" style="width:13px;height:13px"></i> Rejeitar
+            </button>
+            <button class="mh-btn" onclick="aprovar('${r.vinculo_id}', this)">
+              <i data-lucide="check" style="width:13px;height:13px"></i> Aprovar
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function aprovar(id, btn) {
+      const erroDiv = document.getElementById("aprovacaoErro");
+      erroDiv.style.display = "none";
+      btn.disabled = true;
+      try {
+        await window.matchhelpFetch(`/api/v1/vinculos/${id}/aprovar`, { method: "POST" });
+        const toast = document.getElementById("aprovacaoToast");
+        const link = `voluntario-decisao.html?vinculo=${id}`;
+        const linkAbs = `${location.origin}${location.pathname.replace(/match\.html$/, "")}${link}`;
+        toast.innerHTML =
+          `<i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:-2px"></i> ` +
+          `Aprovado! Em produção, o link abaixo seria enviado via WhatsApp ao voluntário:<br>` +
+          `<a href="${link}" target="_blank" style="color:#065f46;text-decoration:underline;word-break:break-all">${linkAbs}</a>`;
+        toast.style.display = "block";
+        lucide.createIcons();
+        await carregarPendentes();
+      } catch (e) {
+        erroDiv.style.display = "block";
+        erroDiv.innerText = "Falha ao aprovar: " + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    async function rejeitar(id, btn) {
+      const erroDiv = document.getElementById("aprovacaoErro");
+      erroDiv.style.display = "none";
+      btn.disabled = true;
+      try {
+        await window.matchhelpFetch(`/api/v1/vinculos/${id}/rejeitar`, { method: "POST" });
+        await carregarPendentes();
+      } catch (e) {
+        erroDiv.style.display = "block";
+        erroDiv.innerText = "Falha ao rejeitar: " + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    // ======================================================================
+    // Init
+    // ======================================================================
+    lucide.createIcons();
+    carregarChamados();
+    contarPendentes();
+  </script>
+  </body>
+</html>

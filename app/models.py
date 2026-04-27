@@ -54,9 +54,11 @@ class StatusVoluntario(str, enum.Enum):
 
 
 class StatusVinculo(str, enum.Enum):
+    aguardando_aprovacao = "aguardando_aprovacao"
     proposto = "proposto"
     aceito = "aceito"
     recusado = "recusado"
+    rejeitado = "rejeitado"
     em_atendimento = "em_atendimento"
     concluido = "concluido"
     cancelado = "cancelado"
@@ -74,6 +76,10 @@ class Voluntario(Base):
     nome: Mapped[str] = mapped_column(String(200), nullable=False)
     telefone: Mapped[str] = mapped_column(String(40), nullable=False)
     email: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    instituicao_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("instituicoes.id"), nullable=True
+    )
 
     relato_original: Mapped[str | None] = mapped_column(Text, nullable=True)
     habilidades: Mapped[list[str]] = mapped_column(
@@ -98,6 +104,16 @@ class Voluntario(Base):
         Boolean, default=False, nullable=False
     )
 
+    # --- Autenticação ------------------------------------------------------
+    senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    senha_temp_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    senha_temp_expira_em: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    precisa_trocar_senha: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False
+    )
+
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -111,6 +127,7 @@ class Voluntario(Base):
     vinculos: Mapped[list["Vinculo"]] = relationship(
         back_populates="voluntario", cascade="all, delete-orphan"
     )
+    instituicao: Mapped["Instituicao | None"] = relationship(back_populates="voluntarios")
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +141,7 @@ class Instituicao(Base):
     )
     nome: Mapped[str] = mapped_column(String(200), nullable=False)
     cnpj: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True)
+    regiao: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     verificada: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     contato: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
@@ -134,6 +152,7 @@ class Instituicao(Base):
     necessidades: Mapped[list["Necessidade"]] = relationship(
         back_populates="instituicao", cascade="all, delete-orphan"
     )
+    voluntarios: Mapped[list["Voluntario"]] = relationship(back_populates="instituicao")
 
 
 # ---------------------------------------------------------------------------
