@@ -1,7 +1,7 @@
 // Configuração compartilhada da URL base da API.
 // Pode ser sobrescrita em runtime via localStorage.setItem('matchhelp_api', 'https://...').
 (function () {
-  const DEFAULT_API = "https://coveting-economy-tingling.ngrok-free.dev";
+  const DEFAULT_API = "http://192.241.151.209:8000";
   const stored = localStorage.getItem("matchhelp_api");
   window.MATCHHELP_API = (stored && stored.trim()) || DEFAULT_API;
 
