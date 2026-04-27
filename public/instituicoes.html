@@ -4,129 +4,295 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MatchHelp — Instituições</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              mh: {
+                blue: '#2b529a',
+                orange: '#f69331',
+                teal: '#37a991',
+                lightblue: '#1b91f6',
+                purple: '#7a52cc',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="asset/css/style-home.css" />
   </head>
-  <body>
-    <div class="mh-shell">
-      <header class="mh-topbar">
-        <div class="mh-brand">
+
+  <body class="bg-white text-slate-900 overflow-x-hidden">
+
+    <!-- Background -->
+    <div
+      class="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-10">
+      <div
+        class="absolute top-20 left-10 w-72 h-72 bg-mh-orange rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-10 right-10 w-96 h-96 bg-mh-blue rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Navbar -->
+    <header
+      class="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+        <div class="flex items-center gap-3">
+          <img
+            src="asset/img/Logo.png"
+            alt="MatchHelp Logo"
+            onerror="this.src='https://placehold.co/40x40?text=MH'"
+            width="42"
+            height="42" />
+
           <div>
-            <img src="asset/img/Logo.png" alt="MatchHelp Logo"
-              onerror="this.src='https://placehold.co/40x40?text=MH'"
-              width="40px" height="40px">
-          </div>
-          <div>
-            <div class="mh-brand-name"><span
-                class="accent">Match</span>Help</div>
-            <div class="mh-brand-sub">Instituições</div>
+            <div
+              class="text-2xl font-extrabold italic tracking-tight text-mh-blue">
+              Match<span class="text-mh-orange">Help</span>
+            </div>
+            <div
+              class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+              Instituições
+            </div>
           </div>
         </div>
-        <nav class="mh-topnav">
-          <a href="home.html">Início</a>
-          <a href="voluntarios.html">Voluntários</a>
-          <a href="instituicoes.html" class="active">Instituições</a>
-          <a href="chamados.html">Chamados</a>
-          <a href="match.html">Match</a>
+
+        <nav
+          class="hidden md:flex items-center gap-3 text-sm font-semibold text-slate-600">
+
+          <a href="home.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Início
+          </a>
+
+          <a href="voluntarios.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Voluntários
+          </a>
+
+          <a href="instituicoes.html"
+            class="text-mh-blue bg-mh-orange/10 border border-mh-orange px-4 py-2 rounded-xl">
+            Instituições
+          </a>
+
+          <a href="chamados.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Chamados
+          </a>
+
+          <a href="match.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Match
+          </a>
+
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main class="mh-main">
-        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
-            style="width:14px;height:14px"></i> Voltar ao painel</a>
-        <div class="mh-page-header">
+    <!-- Main -->
+    <main class="pt-36 pb-24 px-6">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div
+          class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+
           <div>
-            <h1>Instituições</h1>
-            <p>Organizações cadastradas que abrem chamados na plataforma.</p>
+            <a href="home.html"
+              class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-mh-blue transition mb-4">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              Voltar ao painel
+            </a>
+
+            <h1
+              class="text-5xl font-extrabold tracking-tight mb-3 text-slate-800">
+              Instituições
+            </h1>
+
+            <p class="text-slate-500 text-lg max-w-2xl leading-relaxed">
+              Organizações cadastradas que utilizam a plataforma para abrir
+              chamados e receber apoio voluntário.
+            </p>
           </div>
-          <button class="mh-btn ghost" onclick="carregar()"><i
-              data-lucide="refresh-cw" style="width:14px;height:14px"></i>
-            Atualizar</button>
+
+          <button
+            onclick="carregar()"
+            class="bg-mh-blue text-white px-6 py-3 rounded-2xl font-semibold hover:bg-mh-orange transition flex items-center gap-2 shadow-lg shadow-mh-blue/10">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            Atualizar
+          </button>
         </div>
 
-        <div class="mh-toolbar">
-          <input id="busca" class="mh-input" type="text"
-            placeholder="Buscar por nome ou CNPJ..." />
-          <select id="filtroVerificada" class="mh-select">
+        <!-- Toolbar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+
+          <input
+            id="busca"
+            type="text"
+            placeholder="Buscar por nome ou CNPJ..."
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition" />
+
+          <select
+            id="filtroVerificada"
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition">
             <option value>Todas</option>
             <option value="sim">Verificadas</option>
             <option value="nao">Não verificadas</option>
           </select>
         </div>
 
-        <div id="erro" class="mh-error" style="display:none"></div>
-        <div id="lista" class="mh-list">
-          <div class="mh-empty">Carregando instituições...</div>
+        <!-- Error -->
+        <div
+          id="erro"
+          style="display:none"
+          class="mb-8 bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl text-sm">
         </div>
-      </main>
 
-      <footer class="mh-footer">
-        MatchHelp · API: <code id="api-url">—</code>
-      </footer>
-    </div>
+        <!-- Lista -->
+        <div id="lista" class="grid grid-cols-1 gap-6">
+          <div
+            class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm text-slate-400">
+            Carregando instituições...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-100 bg-slate-50 py-10 text-center">
+      <div class="max-w-7xl mx-auto px-6">
+        <p class="text-slate-400 text-sm mb-2">
+          MatchHelp · API:
+          <code id="api-url">—</code>
+        </p>
+      </div>
+    </footer>
 
     <script src="asset/js/api-config.js"></script>
-    <script>
-    document.getElementById("api-url").innerText = window.MATCHHELP_API;
-    let cache = [];
 
-    function render() {
-      const q = document.getElementById("busca").value.trim().toLowerCase();
-      const ver = document.getElementById("filtroVerificada").value;
-      const filtrados = cache.filter(i => {
-        if (q && !((i.nome || "").toLowerCase().includes(q) || (i.cnpj || "").toLowerCase().includes(q))) return false;
-        if (ver === "sim" && !i.verificada) return false;
-        if (ver === "nao" && i.verificada) return false;
-        return true;
-      });
-      const lista = document.getElementById("lista");
-      if (!filtrados.length) {
-        lista.innerHTML = `<div class="mh-empty">Nenhuma instituição encontrada.</div>`;
-        return;
-      }
-      lista.innerHTML = filtrados.map(i => {
-        const c = i.contato || {};
-        return `
-          <div class="mh-row">
-            <div>
-              <div class="title">${i.nome || "—"}</div>
-              <div class="meta">
-                ${i.cnpj ? `<span><i data-lucide="id-card" style="width:12px;height:12px"></i>${i.cnpj}</span>` : ""}
-                ${c.email ? `<span><i data-lucide="mail" style="width:12px;height:12px"></i>${c.email}</span>` : ""}
-                ${c.telefone ? `<span><i data-lucide="phone" style="width:12px;height:12px"></i>${c.telefone}</span>` : ""}
-                ${c.cidade ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i>${c.cidade}</span>` : ""}
+    <script>
+      document.getElementById("api-url").innerText = window.MATCHHELP_API;
+
+      let cache = [];
+
+      function render() {
+        const q = document.getElementById("busca").value.trim().toLowerCase();
+        const ver = document.getElementById("filtroVerificada").value;
+
+        const filtrados = cache.filter(i => {
+          if (q && !((i.nome || "").toLowerCase().includes(q) || (i.cnpj || "").toLowerCase().includes(q))) return false;
+          if (ver === "sim" && !i.verificada) return false;
+          if (ver === "nao" && i.verificada) return false;
+          return true;
+        });
+
+        const lista = document.getElementById("lista");
+
+        if (!filtrados.length) {
+          lista.innerHTML = `
+            <div class="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 shadow-sm">
+              Nenhuma instituição encontrada.
+            </div>
+          `;
+          return;
+        }
+
+        lista.innerHTML = filtrados.map(i => {
+          const c = i.contato || {};
+
+          return `
+            <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+
+              <div class="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h3 class="text-2xl font-bold text-slate-800 mb-2">
+                    ${i.nome || "—"}
+                  </h3>
+
+                  <div class="flex flex-wrap gap-3 text-sm text-slate-500">
+
+                    ${i.cnpj ? `
+                      <span class="flex items-center gap-1">
+                        <i data-lucide="id-card" class="w-4 h-4"></i>
+                        ${i.cnpj}
+                      </span>
+                    ` : ""}
+
+                    ${c.cidade ? `
+                      <span class="flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        ${c.cidade}
+                      </span>
+                    ` : ""}
+
+                  </div>
+                </div>
+
+                ${i.verificada
+                  ? `<span class="bg-green-100 text-green-600 px-4 py-2 rounded-xl text-xs font-bold">Verificada</span>`
+                  : `<span class="bg-slate-100 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold">Pendente</span>`}
+              </div>
+
+              <div class="space-y-3 text-sm text-slate-500">
+
+                ${c.email ? `
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    ${c.email}
+                  </div>
+                ` : ""}
+
+                ${c.telefone ? `
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                    ${c.telefone}
+                  </div>
+                ` : ""}
+
               </div>
             </div>
-            <div class="right">
-              ${i.verificada ? `<span class="mh-badge green">Verificada</span>` : `<span class="mh-badge slate">Pendente</span>`}
-            </div>
-          </div>
-        `;
-      }).join("");
-      lucide.createIcons();
-    }
+          `;
+        }).join("");
 
-    async function carregar() {
-      const erro = document.getElementById("erro");
-      erro.style.display = "none";
-      try {
-        const data = await window.matchhelpFetch("/api/v1/instituicoes");
-        cache = Array.isArray(data) ? data : (data.items || []);
-        render();
-      } catch (e) {
-        // fallback: o endpoint pode ainda não existir; mostra mensagem amigável
-        cache = [];
-        erro.style.display = "block";
-        erro.innerText = "Não foi possível carregar instituições (" + e.message + "). Verifique se o endpoint /api/v1/instituicoes existe na API.";
-        document.getElementById("lista").innerHTML = `<div class="mh-empty">Sem dados para exibir.</div>`;
+        lucide.createIcons();
       }
-    }
 
-    document.getElementById("busca").addEventListener("input", render);
-    document.getElementById("filtroVerificada").addEventListener("change", render);
+      async function carregar() {
+        const erro = document.getElementById("erro");
+        erro.style.display = "none";
 
-    lucide.createIcons();
-    carregar();
-  </script>
+        try {
+          const data = await window.matchhelpFetch("/api/v1/instituicoes");
+          cache = Array.isArray(data) ? data : (data.items || []);
+          render();
+        } catch (e) {
+          cache = [];
+          erro.style.display = "block";
+          erro.innerText = "Não foi possível carregar instituições (" + e.message + ").";
+
+          document.getElementById("lista").innerHTML = `
+            <div class="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 shadow-sm">
+              Sem dados para exibir.
+            </div>
+          `;
+        }
+      }
+
+      document.getElementById("busca").addEventListener("input", render);
+      document.getElementById("filtroVerificada").addEventListener("change", render);
+
+      lucide.createIcons();
+      carregar();
+    </script>
   </body>
 </html>
