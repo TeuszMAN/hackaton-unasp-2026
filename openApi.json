@@ -8,11 +8,11 @@
     },
     "version": "0.2.0"
   },
-    "servers": [
-    {
-      "url": "https://coveting-economy-tingling.ngrok-free.dev",
-      "description": "Servidor Local via ngrok"
-    }
+  "servers": [
+  {
+    "url": "https://coveting-economy-tingling.ngrok-free.dev",
+    "description": "Servidor Local via ngrok"
+  }
   ],
   "paths": {
     "/": {
@@ -358,7 +358,7 @@
           "Instituições"
         ],
         "summary": "Cadastrar instituição",
-        "description": "Registra uma nova instituição parceira na plataforma.",
+        "description": "Cria uma nova instituição parceira. Retorna 409 se já existe instituição com o mesmo CNPJ.",
         "operationId": "cadastrar_instituicao_api_v1_instituicoes_post",
         "requestBody": {
           "required": true,
@@ -414,10 +414,30 @@
                   "type": "null"
                 }
               ],
-              "description": "Filtra pelo status de verificação.",
+              "description": "Filtra por status de verificação.",
               "title": "Verificada"
             },
-            "description": "Filtra pelo status de verificação."
+            "description": "Filtra por status de verificação."
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Busca textual em nome ou CNPJ (case-insensitive).",
+              "title": "Busca"
+            },
+            "description": "Busca textual em nome ou CNPJ (case-insensitive)."
           },
           {
             "name": "limit",
@@ -427,7 +447,7 @@
               "type": "integer",
               "maximum": 500,
               "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -507,7 +527,7 @@
           "Instituições"
         ],
         "summary": "Atualizar instituição",
-        "description": "Atualiza parcialmente os dados de uma instituição, incluindo seu status de verificação.",
+        "description": "Atualiza parcialmente os dados de uma instituição. Útil também para marcar como `verificada=true` após validação manual.",
         "operationId": "atualizar_instituicao_api_v1_instituicoes__instituicao_id__patch",
         "parameters": [
           {
@@ -559,7 +579,7 @@
           "Instituições"
         ],
         "summary": "Remover instituição",
-        "description": "Remove uma instituição. Necessidades vinculadas são excluídas em cascata (cascade delete).",
+        "description": "Remove uma instituição. Atenção: a remoção propaga em cascata para as necessidades vinculadas (conforme definido no model).",
         "operationId": "remover_instituicao_api_v1_instituicoes__instituicao_id__delete",
         "parameters": [
           {
@@ -576,6 +596,54 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instituicoes/{instituicao_id}/necessidades": {
+      "get": {
+        "tags": [
+          "Instituições"
+        ],
+        "summary": "Listar chamados de uma instituição",
+        "description": "Retorna todos os chamados (necessidades) registrados pela instituição informada.",
+        "operationId": "listar_necessidades_da_instituicao_api_v1_instituicoes__instituicao_id__necessidades_get",
+        "parameters": [
+          {
+            "name": "instituicao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Instituicao Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NecessidadeOut"
+                  },
+                  "title": "Response Listar Necessidades Da Instituicao Api V1 Instituicoes  Instituicao Id  Necessidades Get"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",

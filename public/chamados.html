@@ -1,71 +1,78 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MatchHelp — Chamados</title>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../asset/css/style-home.css" />
-</head>
-<body>
-  <div class="mh-shell">
-    <header class="mh-topbar">
-      <div class="mh-brand">
-        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
-        <div>
-          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
-          <div class="mh-brand-sub">Chamados / Desastres</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MatchHelp — Chamados</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../asset/css/style-home.css" />
+  </head>
+  <body>
+    <div class="mh-shell">
+      <header class="mh-topbar">
+        <div class="mh-brand">
+          <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+          <div>
+            <div class="mh-brand-name"><span
+                class="accent">Match</span>Help</div>
+            <div class="mh-brand-sub">Chamados / Desastres</div>
+          </div>
         </div>
-      </div>
-      <nav class="mh-topnav">
-        <a href="home.html">Início</a>
-        <a href="voluntarios.html">Voluntários</a>
-        <a href="instituicoes.html">Instituições</a>
-        <a href="chamados.html" class="active">Chamados</a>
-      </nav>
-    </header>
+        <nav class="mh-topnav">
+          <a href="home.html">Início</a>
+          <a href="voluntarios.html">Voluntários</a>
+          <a href="instituicoes.html">Instituições</a>
+          <a href="chamados.html" class="active">Chamados</a>
+          <a href="match.html">Match</a>
+        </nav>
+      </header>
 
-    <main class="mh-main">
-      <a href="home.html" class="mh-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Voltar ao painel</a>
-      <div class="mh-page-header">
-        <div>
-          <h1>Chamados de crise</h1>
-          <p>Necessidades registradas pelas instituições — em ordem de urgência.</p>
+      <main class="mh-main">
+        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
+            style="width:14px;height:14px"></i> Voltar ao painel</a>
+        <div class="mh-page-header">
+          <div>
+            <h1>Chamados de crise</h1>
+            <p>Necessidades registradas pelas instituições — em ordem de
+              urgência.</p>
+          </div>
+          <button class="mh-btn ghost" onclick="carregar()"><i
+              data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+            Atualizar</button>
         </div>
-        <button class="mh-btn ghost" onclick="carregar()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar</button>
-      </div>
 
-      <div class="mh-toolbar">
-        <input id="busca" class="mh-input" type="text" placeholder="Buscar na descrição..." />
-        <select id="filtroStatus" class="mh-select">
-          <option value="">Todos os status</option>
-          <option value="aberta">Aberta</option>
-          <option value="em_atendimento">Em atendimento</option>
-          <option value="concluida">Concluída</option>
-          <option value="cancelada">Cancelada</option>
-        </select>
-        <select id="filtroUrgencia" class="mh-select">
-          <option value="">Qualquer urgência</option>
-          <option value="critica">Crítica</option>
-          <option value="alta">Alta</option>
-          <option value="media">Média</option>
-          <option value="baixa">Baixa</option>
-        </select>
-      </div>
+        <div class="mh-toolbar">
+          <input id="busca" class="mh-input" type="text"
+            placeholder="Buscar na descrição..." />
+          <select id="filtroStatus" class="mh-select">
+            <option value>Todos os status</option>
+            <option value="aberta">Aberta</option>
+            <option value="em_atendimento">Em atendimento</option>
+            <option value="concluida">Concluída</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+          <select id="filtroUrgencia" class="mh-select">
+            <option value>Qualquer urgência</option>
+            <option value="critica">Crítica</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+          </select>
+        </div>
 
-      <div id="erro" class="mh-error" style="display:none"></div>
-      <div id="lista" class="mh-list">
-        <div class="mh-empty">Carregando chamados...</div>
-      </div>
-    </main>
+        <div id="erro" class="mh-error" style="display:none"></div>
+        <div id="lista" class="mh-list">
+          <div class="mh-empty">Carregando chamados...</div>
+        </div>
+      </main>
 
-    <footer class="mh-footer">
-      MatchHelp · API: <code id="api-url">—</code>
-    </footer>
-  </div>
+      <footer class="mh-footer">
+        MatchHelp · API: <code id="api-url">—</code>
+      </footer>
+    </div>
 
-  <script src="../asset/js/api-config.js"></script>
-  <script>
+    <script src="../asset/js/api-config.js"></script>
+    <script>
     document.getElementById("api-url").innerText = window.MATCHHELP_API;
     let cache = [];
 
@@ -137,5 +144,5 @@
     lucide.createIcons();
     carregar();
   </script>
-</body>
+  </body>
 </html>

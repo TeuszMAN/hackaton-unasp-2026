@@ -35,6 +35,11 @@ class VoluntarioCreate(BaseModel):
     telefone: str = Field(..., min_length=8, max_length=40, json_schema_extra={"example": "(11) 98765-4321"})
     email: EmailStr | None = Field(None, json_schema_extra={"example": "ana.silva@email.com"})
 
+    instituicao_id: uuid.UUID | None = Field(
+        None,
+        description="ID da instituição à qual o voluntário está vinculado (opcional).",
+    )
+
     relato: str = Field(
         ...,
         min_length=10,
@@ -102,7 +107,8 @@ class VoluntarioPublico(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    iniciais: str = Field(..., description="Apenas iniciais do nome (ex.: 'A. C. S.')")
+    nome: str = Field(..., description="Nome completo do voluntário.")
+    iniciais: str = Field(..., description="Apenas iniciais do nome (ex.: 'A. C. S.').")
     habilidades: list[str]
     reputacao: float
 
@@ -206,7 +212,18 @@ class MatchRecomendado(BaseModel):
     score_match: float = Field(..., description="Score composto entre 0 e 1.")
     habilidades_correspondentes: list[str]
     distancia_km: float | None
+    distancia_m: int | None = Field(
+        None, description="Distância em metros (arredondada). `null` quando não há coordenadas."
+    )
+    recomendado: bool = Field(
+        False,
+        description="`True` para o voluntário marcado como recomendação primária (menor distância).",
+    )
     status: StatusVinculo
+    justificativa: str | None = Field(
+        None,
+        description="Frase curta gerada pela IA explicando por que o voluntário foi recomendado.",
+    )
 
 
 class MatchmakingResponse(BaseModel):
@@ -214,6 +231,25 @@ class MatchmakingResponse(BaseModel):
     nivel_urgencia: NivelUrgencia
     total_recomendados: int
     recomendacoes: list[MatchRecomendado]
+
+
+class NecessidadeResumo(BaseModel):
+    """Resumo de necessidade exibido na caixa de aprovação."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    descricao_crise: str
+    endereco_texto: str | None
+    nivel_urgencia: NivelUrgencia
+    criado_em: datetime
+
+
+class GrupoAprovacao(BaseModel):
+    """Conjunto de candidatos aguardando aprovação para uma mesma necessidade."""
+
+    necessidade: NecessidadeResumo
+    candidatos: list[MatchRecomendado]
 
 
 class VinculoOut(BaseModel):
@@ -284,6 +320,12 @@ class InstituicaoCreate(BaseModel):
         description="CNPJ da instituição (opcional). Formato: XX.XXX.XXX/XXXX-XX.",
         json_schema_extra={"example": "12.345.678/0001-90"},
     )
+    regiao: str | None = Field(
+        None,
+        max_length=120,
+        description="Região atendida (ex.: 'Zona Sul - SP', 'Norte - Manaus').",
+        json_schema_extra={"example": "Zona Sul - SP"},
+    )
     contato: dict | None = Field(
         None,
         description="Dados de contato em formato livre (email, telefone, responsável, etc.).",
@@ -296,6 +338,7 @@ class InstituicaoUpdate(BaseModel):
 
     nome: str | None = Field(None, min_length=2, max_length=200)
     cnpj: str | None = Field(None, max_length=20)
+    regiao: str | None = Field(None, max_length=120)
     verificada: bool | None = None
     contato: dict | None = None
 
@@ -306,9 +349,72 @@ class InstituicaoOut(BaseModel):
     id: uuid.UUID
     nome: str
     cnpj: str | None
+    regiao: str | None
     verificada: bool
     contato: dict | None
     criado_em: datetime
+
+
+class InstituicaoVerificacao(BaseModel):
+    """Resultado da verificação de duplicidade de cadastro de instituição."""
+
+    existe: bool = Field(..., description="Indica se já existe instituição com o CNPJ informado.")
+    instituicao_id: uuid.UUID | None = Field(
+        None,
+        description="ID interno da instituição existente, quando `existe=True`. Não expõe dados de contato.",
+    )
+
+
+# ===========================================================================
+# Autenticação de voluntário
+# ===========================================================================
+class VoluntarioCadastroAceito(BaseModel):
+    """
+    Resposta do cadastro de voluntário.
+
+    Carrega a senha temporária em texto claro — entregar somente ao próprio
+    voluntário (no chat do agente) e nunca persistir no log.
+    """
+
+    task_id: uuid.UUID
+    voluntario_id: uuid.UUID
+    login_id: str = Field(
+        ...,
+        description="Identificador para login (primeiros 8 caracteres do voluntario_id).",
+    )
+    senha_temporaria: str = Field(
+        ..., description="Senha temporária em texto claro. Válida por tempo limitado."
+    )
+    senha_temp_expira_em: datetime
+    mensagem: str
+
+
+class LoginRequest(BaseModel):
+    login_id: str = Field(
+        ...,
+        min_length=8,
+        max_length=8,
+        description="Primeiros 8 caracteres do voluntario_id.",
+    )
+    senha: str = Field(..., min_length=4, max_length=200)
+
+
+class LoginResponse(BaseModel):
+    token: str
+    voluntario_id: uuid.UUID
+    nome: str
+    precisa_trocar_senha: bool
+    expira_em: datetime
+
+
+class TrocarSenhaRequest(BaseModel):
+    senha_atual: str = Field(..., min_length=4, max_length=200)
+    nova_senha: str = Field(..., min_length=6, max_length=200)
+
+
+class RegiaoOut(BaseModel):
+    regiao: str
+    total_instituicoes: int
 
 
 # ===========================================================================
