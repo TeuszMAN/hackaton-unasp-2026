@@ -1,62 +1,68 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MatchHelp — Instituições</title>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="../asset/css/style-home.css" />
-</head>
-<body>
-  <div class="mh-shell">
-    <header class="mh-topbar">
-      <div class="mh-brand">
-        <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
-        <div>
-          <div class="mh-brand-name"><span class="accent">Match</span>Help</div>
-          <div class="mh-brand-sub">Instituições</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MatchHelp — Instituições</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../asset/css/style-home.css" />
+  </head>
+  <body>
+    <div class="mh-shell">
+      <header class="mh-topbar">
+        <div class="mh-brand">
+          <div class="mh-brand-mark"><i data-lucide="heart-handshake"></i></div>
+          <div>
+            <div class="mh-brand-name"><span
+                class="accent">Match</span>Help</div>
+            <div class="mh-brand-sub">Instituições</div>
+          </div>
         </div>
-      </div>
-      <nav class="mh-topnav">
-        <a href="home.html">Início</a>
-        <a href="voluntarios.html">Voluntários</a>
-        <a href="instituicoes.html" class="active">Instituições</a>
-        <a href="chamados.html">Chamados</a>
-      </nav>
-    </header>
+        <nav class="mh-topnav">
+          <a href="home.html">Início</a>
+          <a href="voluntarios.html">Voluntários</a>
+          <a href="instituicoes.html" class="active">Instituições</a>
+          <a href="chamados.html">Chamados</a>
+          <a href="match.html">Match</a>
+        </nav>
+      </header>
 
-    <main class="mh-main">
-      <a href="home.html" class="mh-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i> Voltar ao painel</a>
-      <div class="mh-page-header">
-        <div>
-          <h1>Instituições</h1>
-          <p>Organizações cadastradas que abrem chamados na plataforma.</p>
+      <main class="mh-main">
+        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
+            style="width:14px;height:14px"></i> Voltar ao painel</a>
+        <div class="mh-page-header">
+          <div>
+            <h1>Instituições</h1>
+            <p>Organizações cadastradas que abrem chamados na plataforma.</p>
+          </div>
+          <button class="mh-btn ghost" onclick="carregar()"><i
+              data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+            Atualizar</button>
         </div>
-        <button class="mh-btn ghost" onclick="carregar()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Atualizar</button>
-      </div>
 
-      <div class="mh-toolbar">
-        <input id="busca" class="mh-input" type="text" placeholder="Buscar por nome ou CNPJ..." />
-        <select id="filtroVerificada" class="mh-select">
-          <option value="">Todas</option>
-          <option value="sim">Verificadas</option>
-          <option value="nao">Não verificadas</option>
-        </select>
-      </div>
+        <div class="mh-toolbar">
+          <input id="busca" class="mh-input" type="text"
+            placeholder="Buscar por nome ou CNPJ..." />
+          <select id="filtroVerificada" class="mh-select">
+            <option value>Todas</option>
+            <option value="sim">Verificadas</option>
+            <option value="nao">Não verificadas</option>
+          </select>
+        </div>
 
-      <div id="erro" class="mh-error" style="display:none"></div>
-      <div id="lista" class="mh-list">
-        <div class="mh-empty">Carregando instituições...</div>
-      </div>
-    </main>
+        <div id="erro" class="mh-error" style="display:none"></div>
+        <div id="lista" class="mh-list">
+          <div class="mh-empty">Carregando instituições...</div>
+        </div>
+      </main>
 
-    <footer class="mh-footer">
-      MatchHelp · API: <code id="api-url">—</code>
-    </footer>
-  </div>
+      <footer class="mh-footer">
+        MatchHelp · API: <code id="api-url">—</code>
+      </footer>
+    </div>
 
-  <script src="../asset/js/api-config.js"></script>
-  <script>
+    <script src="../asset/js/api-config.js"></script>
+    <script>
     document.getElementById("api-url").innerText = window.MATCHHELP_API;
     let cache = [];
 
@@ -118,5 +124,5 @@
     lucide.createIcons();
     carregar();
   </script>
-</body>
+  </body>
 </html>

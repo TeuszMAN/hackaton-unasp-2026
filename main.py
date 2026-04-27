@@ -19,14 +19,13 @@ from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
 from app import models  # noqa: F401 — necessário para registrar os models no metadata
-from app.routers import (
-    dev,
-    estatisticas,
-    instituicoes,
-    necessidades,
-    vinculos,
-    voluntarios,
-)
+from app.routers.auth import router as auth_router
+from app.routers.dev import router as dev_router
+from app.routers.estatisticas import router as estatisticas_router
+from app.routers.instituicoes import router as instituicoes_router
+from app.routers.necessidades import router as necessidades_router
+from app.routers.vinculos import router as vinculos_router
+from app.routers.voluntarios import router as voluntarios_router
 
 
 logging.basicConfig(
@@ -52,6 +51,7 @@ app = FastAPI(
     contact={"name": "Equipe Hackathon UNASP 2026"},
     openapi_tags=[
         {"name": "Health", "description": "Verificação de saúde da API."},
+        {"name": "Autenticação", "description": "Login e troca de senha do voluntário."},
         {"name": "Voluntários", "description": "Cadastro e gestão de voluntários."},
         {"name": "Instituições", "description": "Cadastro e gestão de instituições parceiras."},
         {"name": "Necessidades", "description": "Registro de demandas de crise."},
@@ -66,7 +66,7 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # hackathon dev — libera qualquer origem
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,12 +101,13 @@ def health_check():
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
-app.include_router(voluntarios.router)
-app.include_router(instituicoes.router)
-app.include_router(necessidades.router)
-app.include_router(vinculos.router)
-app.include_router(estatisticas.router)
-app.include_router(dev.router)
+app.include_router(auth_router)
+app.include_router(voluntarios_router)
+app.include_router(instituicoes_router)
+app.include_router(necessidades_router)
+app.include_router(vinculos_router)
+app.include_router(estatisticas_router)
+app.include_router(dev_router)
 
 # ---------------------------------------------------------------------------
 # Frontend estático — deve ser montado por último

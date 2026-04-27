@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import SessionLocal, get_db
+from app.services import auth as auth_svc
 from app.services.ai import get_ia_service
 from app.services.geocoding import geocodificar
 
@@ -60,7 +61,7 @@ async def _enriquecer_voluntario(voluntario_id: uuid.UUID) -> None:
 @router.post(
     "",
     status_code=status.HTTP_202_ACCEPTED,
-    response_model=schemas.TaskAceita,
+    response_model=schemas.VoluntarioCadastroAceito,
     responses={
         409: {
             "description": "Voluntário já cadastrado com o mesmo telefone ou e-mail.",
@@ -117,16 +118,32 @@ def cadastrar_voluntario(
             ),
         )
 
+    if payload.instituicao_id is not None:
+        instituicao = db.get(models.Instituicao, payload.instituicao_id)
+        if instituicao is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Instituição {payload.instituicao_id} não encontrada.",
+            )
+
+    senha_temp = auth_svc.gerar_senha_temporaria()
+    senha_temp_hash = auth_svc.hash_senha(senha_temp)
+    expira_em = auth_svc.calcular_expiracao_temp()
+
     voluntario = models.Voluntario(
         nome=payload.nome,
         telefone=payload.telefone,
         email=payload.email,
+        instituicao_id=payload.instituicao_id,
         relato_original=payload.relato,
         habilidades=[],
         endereco_texto=payload.endereco,
         latitude=payload.latitude,
         longitude=payload.longitude,
         consentimento_lgpd=payload.consentimento_lgpd,
+        senha_temp_hash=senha_temp_hash,
+        senha_temp_expira_em=expira_em,
+        precisa_trocar_senha=True,
     )
     db.add(voluntario)
     db.commit()
@@ -134,10 +151,17 @@ def cadastrar_voluntario(
 
     background_tasks.add_task(_enriquecer_voluntario, voluntario.id)
 
-    return schemas.TaskAceita(
+    return schemas.VoluntarioCadastroAceito(
         task_id=uuid.uuid4(),
-        resource_id=voluntario.id,
-        mensagem="Cadastro recebido — enriquecimento em andamento.",
+        voluntario_id=voluntario.id,
+        login_id=auth_svc.login_id_de(voluntario.id),
+        senha_temporaria=senha_temp,
+        senha_temp_expira_em=expira_em,
+        mensagem=(
+            "Cadastro recebido — enriquecimento em andamento. "
+            "Use o login_id e a senha temporária acima para acessar o portal "
+            "do voluntário. A senha é válida por 2 horas."
+        ),
     )
 
 
