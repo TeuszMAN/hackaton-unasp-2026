@@ -1,0 +1,49 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Pull & rebuild on VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy via SSH (password)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            cd /root/hackaton-unasp-2026
+
+            echo "==> git fetch & reset"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+
+            echo "==> docker compose build & up"
+            docker compose pull || true
+            docker compose up -d --build --remove-orphans
+
+            echo "==> prune dangling images"
+            docker image prune -f
+
+            echo "==> health check"
+            sleep 5
+            curl --fail --silent --show-error --max-time 10 http://localhost:8000/health \
+              || (echo "Health check FAIL"; docker compose logs --tail=80; exit 1)
+
+            echo "==> deploy ok"
