@@ -112,4 +112,5 @@ app.include_router(dev_router)
 # ---------------------------------------------------------------------------
 # Frontend estático — deve ser montado por último
 # ---------------------------------------------------------------------------
+app.mount("/asset", StaticFiles(directory="asset"), name="asset")
 app.mount("/", StaticFiles(directory="public", html=True), name="static")
