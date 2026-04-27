@@ -15,6 +15,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
 from app import models  # noqa: F401 — necessário para registrar os models no metadata
@@ -65,10 +66,7 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -87,7 +85,7 @@ def criar_tabelas() -> None:
 # Health
 # ---------------------------------------------------------------------------
 @app.get(
-    "/",
+    "/health",
     tags=["Health"],
     summary="Health Check",
     description="Verifica se a API está online e operacional.",
@@ -109,3 +107,8 @@ app.include_router(necessidades.router)
 app.include_router(vinculos.router)
 app.include_router(estatisticas.router)
 app.include_router(dev.router)
+
+# ---------------------------------------------------------------------------
+# Frontend estático — deve ser montado por último
+# ---------------------------------------------------------------------------
+app.mount("/", StaticFiles(directory="public", html=True), name="static")
