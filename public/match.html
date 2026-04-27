@@ -335,169 +335,205 @@
         return "bg-red-500";
       }
 
-      async function carregarChamados() {
-        try {
-          const data = await window.matchhelpFetch("/api/v1/necessidades");
+      
+      // ======================================================================
+// Carregar chamados
+// ======================================================================
+async function carregarChamados() {
+  try {
+    const data = await window.matchhelpFetch("/api/v1/necessidades");
 
-          const lista = Array.isArray(data)
-            ? data
-            : (data.items || []);
+    const lista = Array.isArray(data)
+      ? data
+      : (data.items || []);
 
-          const sel = document.getElementById("selectChamado");
+    const sel = document.getElementById("selectChamado");
 
-          if (!lista.length) {
-            sel.innerHTML =
-              `<option value="">Nenhum chamado encontrado</option>`;
-            return;
-          }
+    if (!lista.length) {
+      sel.innerHTML =
+        `<option value="">Nenhum chamado encontrado</option>`;
+      return;
+    }
 
-          sel.innerHTML = lista.map(n => {
-            const desc = (n.descricao_crise || "").slice(0, 80);
+    sel.innerHTML =
+      `<option value="">Selecione um chamado</option>` +
+      lista.map(n => {
+        const desc = (n.descricao_crise || "").slice(0, 80);
 
-            return `
-              <option value="${n.id}">
-                ${desc}${(n.descricao_crise || "").length > 80 ? "..." : ""}
-              </option>
-            `;
-          }).join("");
-
-        } catch (e) {
-          document.getElementById("selectChamado").innerHTML =
-            `<option value="">Erro ao carregar</option>`;
-        }
-      }
-
-      async function rodarMatch() {
-        const necessidadeId =
-          document.getElementById("selectChamado").value;
-
-        const topN =
-          parseInt(document.getElementById("selectTopN").value);
-
-        const erroDiv = document.getElementById("matchErro");
-        const resultDiv = document.getElementById("matchResultado");
-        const btn = document.getElementById("btnRodar");
-
-        erroDiv.style.display = "none";
-
-        btn.disabled = true;
-
-        btn.innerHTML = `
-          <div class="w-4 h-4 border-2 border-white border-r-transparent rounded-full animate-spin"></div>
-          Processando...
+        return `
+          <option value="${n.id}">
+            ${desc}${(n.descricao_crise || "").length > 80 ? "..." : ""}
+          </option>
         `;
+      }).join("");
 
-        try {
-          const resp = await window.matchhelpFetch(
-            "/api/v1/vinculos",
-            {
-              method: "POST",
-              body: {
-                necessidade_id: necessidadeId,
-                top_n: topN
-              }
-            }
-          );
+  } catch (e) {
+    document.getElementById("selectChamado").innerHTML =
+      `<option value="">Erro ao carregar chamados</option>`;
+  }
+}
 
-          if (!resp.recomendacoes?.length) {
-            resultDiv.innerHTML = `
-              <div class="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
-                <div class="text-5xl mb-4">🔍</div>
-                <h3 class="font-bold text-lg mb-2">
-                  Nenhum voluntário encontrado
-                </h3>
-              </div>
-            `;
-            return;
-          }
+// ======================================================================
+// Rodar Match
+// ======================================================================
+async function rodarMatch() {
+  const necessidadeId =
+    document.getElementById("selectChamado").value?.trim();
 
-          resultDiv.innerHTML = resp.recomendacoes.map(r => {
-            const v = r.voluntario || {};
-            const scorePct = Math.round((r.score_match || 0) * 100);
+  const topN =
+    parseInt(document.getElementById("selectTopN").value);
 
-            return `
-              <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+  const erroDiv = document.getElementById("matchErro");
+  const resultDiv = document.getElementById("matchResultado");
+  const btn = document.getElementById("btnRodar");
 
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
+  // valida seleção
+  if (!necessidadeId) {
+    erroDiv.style.display = "block";
 
-                  <div class="flex items-center gap-4">
+    erroDiv.innerText =
+      "Selecione um chamado válido antes de rodar o match.";
 
-                    <div
-                      class="w-14 h-14 rounded-2xl bg-mh-blue text-white flex items-center justify-center font-black shadow-lg shadow-mh-blue/20">
-                      ${iniciais(v.nome)}
-                    </div>
+    return;
+  }
 
-                    <div>
-                      <h3 class="text-xl font-bold text-slate-800">
-                        ${v.nome || "—"}
-                      </h3>
+  erroDiv.style.display = "none";
 
-                      <p class="text-sm text-slate-500 mt-1">
-                        Reputação:
-                        ${(v.reputacao ?? 0).toFixed(1)}/5
-                      </p>
-                    </div>
-                  </div>
+  btn.disabled = true;
 
-                  <div class="text-right">
-                    <div class="text-3xl font-black text-slate-800">
-                      ${scorePct}%
-                    </div>
+  btn.innerHTML = `
+    <div class="w-4 h-4 border-2 border-white border-r-transparent rounded-full animate-spin"></div>
+    Processando...
+  `;
 
-                    <div class="w-40 h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
-                      <div
-                        class="h-full ${scoreColor(r.score_match || 0)}"
-                        style="width:${scorePct}%"></div>
-                    </div>
-                  </div>
-                </div>
+  resultDiv.innerHTML = `
+    <div class="bg-white border border-slate-100 rounded-3xl p-10 shadow-sm text-slate-400">
+      Executando matchmaking...
+    </div>
+  `;
 
-                ${
-                  (r.habilidades_correspondentes || []).length
-                    ? `
-                  <div class="flex flex-wrap gap-2 mb-4">
-                    ${r.habilidades_correspondentes.map(h => `
-                      <span class="bg-mh-orange/10 text-mh-orange px-3 py-1 rounded-xl text-xs font-bold">
-                        ${h}
-                      </span>
-                    `).join("")}
-                  </div>
-                `
-                    : ""
-                }
-
-                ${
-                  r.justificativa
-                    ? `
-                  <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed">
-                    ${r.justificativa}
-                  </div>
-                `
-                    : ""
-                }
-
-              </div>
-            `;
-          }).join("");
-
-          contarPendentes();
-
-        } catch (e) {
-          erroDiv.style.display = "block";
-          erroDiv.innerText =
-            "Erro ao rodar matchmaking: " + e.message;
-
-        } finally {
-          btn.disabled = false;
-
-          btn.innerHTML = `
-            <i data-lucide="play" class="w-4 h-4"></i>
-            Rodar Match
-          `;
-
-          lucide.createIcons();
+  try {
+    const resp = await window.matchhelpFetch(
+      "/api/v1/vinculos",
+      {
+        method: "POST",
+        body: {
+          necessidade_id: necessidadeId,
+          top_n: topN
         }
       }
+    );
+
+    // sem resultados
+    if (!resp.recomendacoes?.length) {
+      resultDiv.innerHTML = `
+        <div class="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+          <div class="text-5xl mb-4">🔍</div>
+
+          <h3 class="font-bold text-lg mb-2">
+            Nenhum voluntário encontrado
+          </h3>
+
+          <p class="text-slate-500">
+            Não encontramos candidatos compatíveis para esse chamado.
+          </p>
+        </div>
+      `;
+
+      return;
+    }
+
+    // render resultados
+    resultDiv.innerHTML = resp.recomendacoes.map(r => {
+      const v = r.voluntario || {};
+      const scorePct = Math.round((r.score_match || 0) * 100);
+
+      return `
+        <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
+
+            <div class="flex items-center gap-4">
+
+              <div
+                class="w-14 h-14 rounded-2xl bg-mh-blue text-white flex items-center justify-center font-black shadow-lg shadow-mh-blue/20">
+                ${iniciais(v.nome)}
+              </div>
+
+              <div>
+                <h3 class="text-xl font-bold text-slate-800">
+                  ${v.nome || "—"}
+                </h3>
+
+                <p class="text-sm text-slate-500 mt-1">
+                  Reputação:
+                  ${(v.reputacao ?? 0).toFixed(1)}/5
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <div class="text-3xl font-black text-slate-800">
+                ${scorePct}%
+              </div>
+
+              <div class="w-40 h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                <div
+                  class="h-full ${scoreColor(r.score_match || 0)}"
+                  style="width:${scorePct}%"></div>
+              </div>
+            </div>
+          </div>
+
+          ${
+            (r.habilidades_correspondentes || []).length
+              ? `
+            <div class="flex flex-wrap gap-2 mb-4">
+              ${r.habilidades_correspondentes.map(h => `
+                <span class="bg-mh-orange/10 text-mh-orange px-3 py-1 rounded-xl text-xs font-bold">
+                  ${h}
+                </span>
+              `).join("")}
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            r.justificativa
+              ? `
+            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed">
+              ${r.justificativa}
+            </div>
+          `
+              : ""
+          }
+
+        </div>
+      `;
+    }).join("");
+
+    contarPendentes();
+
+  } catch (e) {
+    erroDiv.style.display = "block";
+
+    erroDiv.innerText =
+      "Erro ao rodar matchmaking: " + e.message;
+
+    resultDiv.innerHTML = "";
+
+  } finally {
+    btn.disabled = false;
+
+    btn.innerHTML = `
+      <i data-lucide="play" class="w-4 h-4"></i>
+      Rodar Match
+    `;
+
+    lucide.createIcons();
+  }
+}
 
       async function contarPendentes() {
         try {
