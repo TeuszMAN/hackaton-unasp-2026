@@ -4,519 +4,640 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MatchHelp — Match Inteligente</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              mh: {
+                blue: '#2b529a',
+                orange: '#f69331',
+                teal: '#37a991',
+                lightblue: '#1b91f6',
+                purple: '#7a52cc',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="asset/css/style-home.css" />
-    <style>
-    /* ---- Tabs ---- */
-    .mh-tabs { display: flex; gap: 4px; margin-bottom: 24px; }
-    .mh-tab {
-      font-size: 13px; font-weight: 700; padding: 10px 20px;
-      border-radius: 10px; cursor: pointer; border: 1px solid var(--mh-line);
-      background: #fff; color: var(--mh-muted); transition: all .15s;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .mh-tab:hover { color: var(--mh-ink); border-color: #cbd5e1; }
-    .mh-tab.active { background: var(--mh-red); color: #fff; border-color: var(--mh-red); }
-    .mh-tab-panel { display: none; }
-    .mh-tab-panel.active { display: block; }
-
-    /* ---- Match form ---- */
-    .mh-match-form {
-      display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
-      background: #fff; border: 1px solid var(--mh-line); border-radius: 14px;
-      padding: 16px 18px; margin-bottom: 20px;
-    }
-    .mh-match-form .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
-    .mh-match-form label { font-size: 11px; font-weight: 700; color: var(--mh-muted); text-transform: uppercase; letter-spacing: .08em; }
-
-    /* ---- Score bar ---- */
-    .mh-score-bar {
-      height: 6px; border-radius: 99px; background: var(--mh-line); overflow: hidden; margin-top: 6px; width: 120px;
-    }
-    .mh-score-bar .fill {
-      height: 100%; border-radius: 99px; transition: width .4s ease;
-    }
-
-    /* ---- Result card ---- */
-    .mh-match-card {
-      border: 1px solid var(--mh-line); border-radius: 14px; padding: 16px 18px;
-      background: #fff; transition: border-color .15s, box-shadow .15s;
-    }
-    .mh-match-card:hover { border-color: #fecaca; box-shadow: 0 8px 22px -16px rgba(15,23,42,.2); }
-    .mh-match-card.recomendado { border: 2px solid var(--mh-red); }
-    .mh-match-card .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-    .mh-match-card .card-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-    .mh-match-card .card-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
-
-    /* ---- Avatar ---- */
-    .mh-avatar {
-      width: 44px; height: 44px; border-radius: 12px; background: var(--mh-red);
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 14px; flex-shrink: 0;
-    }
-    .mh-avatar.small { width: 36px; height: 36px; font-size: 12px; border-radius: 10px; }
-
-    /* ---- Stat pill ---- */
-    .mh-stat {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-      font-size: 11px; color: var(--mh-muted);
-    }
-    .mh-stat .value { font-size: 16px; font-weight: 800; color: var(--mh-ink); }
-
-    /* ---- Spinner ---- */
-    .mh-spinner {
-      display: inline-block; width: 18px; height: 18px; border: 2.5px solid #fff;
-      border-right-color: transparent; border-radius: 50%;
-      animation: spin .6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ---- Grupo de aprovação ---- */
-    .mh-grupo {
-      border: 1px solid var(--mh-line); border-radius: 14px; padding: 16px;
-      margin-bottom: 16px; background: #fff;
-    }
-    .mh-grupo-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 12px; margin-bottom: 12px;
-    }
-
-    /* ---- Toast ---- */
-    .mh-toast {
-      display: none; margin: 12px 0; padding: 12px 14px;
-      background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px;
-      color: #065f46; font-size: 13px;
-    }
-
-    /* ---- Justificativa IA ---- */
-    .mh-justificativa {
-      margin-top: 8px; padding: 8px 10px; background: var(--mh-red-soft);
-      border-left: 3px solid var(--mh-red); border-radius: 6px;
-      font-size: 13px; color: var(--mh-ink); font-style: italic;
-    }
-  </style>
   </head>
-  <body>
-    <div class="mh-shell">
-      <header class="mh-topbar">
-        <div class="mh-brand">
+
+  <body class="bg-white text-slate-900 overflow-x-hidden">
+
+    <!-- Background -->
+    <div
+      class="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-10">
+      <div
+        class="absolute top-20 left-10 w-72 h-72 bg-mh-orange rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-10 right-10 w-96 h-96 bg-mh-blue rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Navbar -->
+    <header
+      class="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+        <div class="flex items-center gap-3">
+          <img
+            src="asset/img/Logo.png"
+            alt="MatchHelp Logo"
+            onerror="this.src='https://placehold.co/40x40?text=MH'"
+            width="42"
+            height="42" />
+
           <div>
-            <img src="asset/img/Logo.png" alt="MatchHelp Logo"
-              onerror="this.src='https://placehold.co/40x40?text=MH'"
-              width="40px" height="40px">
-          </div>
-          <div>
-            <div class="mh-brand-name"><span
-                class="accent">Match</span>Help</div>
-            <div class="mh-brand-sub">Match Inteligente</div>
+            <div
+              class="text-2xl font-extrabold italic tracking-tight text-mh-blue">
+              Match<span class="text-mh-orange">Help</span>
+            </div>
+
+            <div
+              class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+              Match Inteligente
+            </div>
           </div>
         </div>
-        <nav class="mh-topnav">
-          <a href="home.html">Início</a>
-          <a href="voluntarios.html">Voluntários</a>
-          <a href="instituicoes.html">Instituições</a>
-          <a href="chamados.html">Chamados</a>
-          <a href="match.html" class="active">Match</a>
+
+        <nav
+          class="hidden md:flex items-center gap-3 text-sm font-semibold text-slate-600">
+
+          <a href="home.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Início
+          </a>
+
+          <a href="voluntarios.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Voluntários
+          </a>
+
+          <a href="instituicoes.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Instituições
+          </a>
+
+          <a href="chamados.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Chamados
+          </a>
+
+          <a href="match.html"
+            class="text-mh-blue bg-mh-orange/10 border border-mh-orange px-4 py-2 rounded-xl">
+            Match
+          </a>
+
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main class="mh-main">
-        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
-            style="width:14px;height:14px"></i> Voltar ao painel</a>
+    <!-- Main -->
+    <main class="pt-36 pb-24 px-6">
+      <div class="max-w-7xl mx-auto">
 
-        <div class="mh-page-header">
+        <!-- Header -->
+        <div
+          class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+
           <div>
-            <h1>Match Inteligente</h1>
-            <p>Rode o algoritmo de correspondência ou aprove candidatos gerados
-              pelo agente.</p>
+            <a href="home.html"
+              class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-mh-blue transition mb-4">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              Voltar ao painel
+            </a>
+
+            <h1
+              class="text-5xl font-extrabold tracking-tight mb-3 text-slate-800">
+              Match Inteligente
+            </h1>
+
+            <p class="text-slate-500 text-lg max-w-2xl leading-relaxed">
+              Execute o algoritmo de correspondência entre voluntários e crises
+              utilizando skills, proximidade e reputação.
+            </p>
           </div>
         </div>
 
         <!-- Tabs -->
-        <div class="mh-tabs">
-          <button class="mh-tab active" data-tab="rodar"
+        <div class="flex flex-wrap gap-3 mb-10">
+
+          <button
+            class="tab-btn active-tab bg-mh-blue text-white px-5 py-3 rounded-2xl font-semibold flex items-center gap-2 shadow-lg shadow-mh-blue/10 transition"
+            data-tab="rodar"
             onclick="trocarTab('rodar')">
-            <i data-lucide="zap" style="width:14px;height:14px"></i> Rodar Match
+
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            Rodar Match
           </button>
-          <button class="mh-tab" data-tab="aprovacao"
+
+          <button
+            class="tab-btn bg-white border border-slate-200 text-slate-600 px-5 py-3 rounded-2xl font-semibold flex items-center gap-2 hover:border-mh-orange hover:text-mh-blue transition"
+            data-tab="aprovacao"
             onclick="trocarTab('aprovacao')">
-            <i data-lucide="inbox" style="width:14px;height:14px"></i> Caixa de
-            Aprovação
-            <span id="badge-pendentes" class="mh-badge red"
-              style="display:none;margin-left:4px">0</span>
+
+            <i data-lucide="inbox" class="w-4 h-4"></i>
+            Caixa de Aprovação
+
+            <span
+              id="badge-pendentes"
+              class="hidden bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              0
+            </span>
           </button>
+
         </div>
 
-        <!-- ===== TAB: RODAR MATCH ===== -->
-        <div id="tab-rodar" class="mh-tab-panel active">
-          <div class="mh-match-form">
-            <div class="field">
-              <label>Chamado (necessidade)</label>
-              <select id="selectChamado" class="mh-select"
-                style="min-width:320px">
-                <option value>Carregando chamados...</option>
-              </select>
+        <!-- TAB RODAR -->
+        <section id="tab-rodar" class="tab-panel">
+
+          <div
+            class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mb-8">
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+              <div>
+                <label
+                  class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Chamado
+                </label>
+
+                <select
+                  id="selectChamado"
+                  class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition">
+                  <option value>Carregando chamados...</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Top N
+                </label>
+
+                <select
+                  id="selectTopN"
+                  class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition">
+
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                </select>
+              </div>
+
+              <div class="flex items-end">
+                <button
+                  id="btnRodar"
+                  onclick="rodarMatch()"
+                  class="w-full bg-mh-blue text-white px-6 py-4 rounded-2xl font-semibold hover:bg-mh-orange transition flex items-center justify-center gap-2 shadow-lg shadow-mh-blue/10">
+
+                  <i data-lucide="play" class="w-4 h-4"></i>
+                  Rodar Match
+                </button>
+              </div>
+
             </div>
-            <div class="field" style="min-width:100px;flex:0">
-              <label>Top N</label>
-              <select id="selectTopN" class="mh-select" style="min-width:80px">
-                <option value="3">3</option>
-                <option value="5" selected>5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-              </select>
-            </div>
-            <button id="btnRodar" class="mh-btn" onclick="rodarMatch()">
-              <i data-lucide="play" style="width:14px;height:14px"></i> Rodar
-              Match
-            </button>
           </div>
 
-          <div id="matchErro" class="mh-error" style="display:none"></div>
-          <div id="matchResultado" class="mh-list"></div>
-        </div>
+          <div
+            id="matchErro"
+            style="display:none"
+            class="mb-8 bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl text-sm">
+          </div>
 
-        <!-- ===== TAB: APROVAÇÃO ===== -->
-        <div id="tab-aprovacao" class="mh-tab-panel">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-            <button class="mh-btn ghost" onclick="carregarPendentes()">
-              <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+          <div id="matchResultado" class="grid grid-cols-1 gap-6"></div>
+
+        </section>
+
+        <!-- TAB APROVACAO -->
+        <section id="tab-aprovacao" class="tab-panel hidden">
+
+          <div class="flex justify-end mb-6">
+            <button
+              onclick="carregarPendentes()"
+              class="bg-white border border-slate-200 text-slate-600 px-5 py-3 rounded-2xl font-semibold hover:border-mh-orange hover:text-mh-blue transition flex items-center gap-2">
+
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
               Atualizar
             </button>
           </div>
-          <div id="aprovacaoErro" class="mh-error" style="display:none"></div>
-          <div id="aprovacaoToast" class="mh-toast"></div>
-          <div id="aprovacaoLista" class="mh-list">
-            <div class="mh-empty">Carregando pendências...</div>
+
+          <div
+            id="aprovacaoErro"
+            style="display:none"
+            class="mb-8 bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl text-sm">
           </div>
-        </div>
 
-      </main>
+          <div
+            id="aprovacaoToast"
+            style="display:none"
+            class="mb-8 bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 rounded-2xl text-sm">
+          </div>
 
-      <footer class="mh-footer">
-        MatchHelp · Hackathon UNASP 2026 · API: <code id="api-url">—</code>
-      </footer>
-    </div>
+          <div id="aprovacaoLista" class="grid grid-cols-1 gap-6">
+            <div
+              class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm text-slate-400">
+              Carregando pendências...
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-100 bg-slate-50 py-10 text-center">
+      <div class="max-w-7xl mx-auto px-6">
+        <p class="text-slate-400 text-sm mb-2">
+          MatchHelp · Hackathon UNASP 2026
+        </p>
+
+        <p class="text-xs text-slate-300">
+          API:
+          <code id="api-url">—</code>
+        </p>
+      </div>
+    </footer>
 
     <script src="asset/js/api-config.js"></script>
+
     <script>
-    document.getElementById("api-url").innerText = window.MATCHHELP_API;
+      document.getElementById("api-url").innerText = window.MATCHHELP_API;
 
-    // ======================================================================
-    // Tabs
-    // ======================================================================
-    function trocarTab(nome) {
-      document.querySelectorAll('.mh-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === nome));
-      document.querySelectorAll('.mh-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + nome));
-      if (nome === 'aprovacao') carregarPendentes();
-    }
-
-    // ======================================================================
-    // Helpers
-    // ======================================================================
-    function iniciais(nome) {
-      return (nome || "").split(" ").filter(Boolean).map(p => p[0].toUpperCase()).join(". ") + ".";
-    }
-    function badgeUrg(u) {
-      const map = { critico: "red", alto: "red", medio: "amber", baixo: "slate" };
-      return `<span class="mh-badge ${map[u] || 'slate'}">${u || "—"}</span>`;
-    }
-    function fmtDist(m) {
-      if (m == null) return "n/d";
-      return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
-    }
-    function fmtDistKm(km) {
-      if (km == null) return "n/d";
-      return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
-    }
-    function scoreColor(score) {
-      if (score >= 0.7) return "#10b981";
-      if (score >= 0.4) return "#f59e0b";
-      return "#ef4444";
-    }
-
-    // ======================================================================
-    // TAB 1: Rodar Match
-    // ======================================================================
-    async function carregarChamados() {
-      try {
-        const data = await window.matchhelpFetch("/api/v1/necessidades");
-        const lista = Array.isArray(data) ? data : (data.items || []);
-        const ordemU = { critico: 0, alto: 1, medio: 2, baixo: 3 };
-        lista.sort((a, b) => (ordemU[a.nivel_urgencia] ?? 9) - (ordemU[b.nivel_urgencia] ?? 9));
-        const sel = document.getElementById("selectChamado");
-        if (!lista.length) {
-          sel.innerHTML = `<option value="">Nenhum chamado encontrado</option>`;
-          return;
-        }
-        sel.innerHTML = lista.map(n => {
-          const desc = (n.descricao_crise || "").slice(0, 80);
-          const urg = (n.nivel_urgencia || "").toUpperCase();
-          return `<option value="${n.id}">[${urg}] ${desc}${(n.descricao_crise || "").length > 80 ? "..." : ""}</option>`;
-        }).join("");
-      } catch (e) {
-        document.getElementById("selectChamado").innerHTML = `<option value="">Erro ao carregar: ${e.message}</option>`;
-      }
-    }
-
-    async function rodarMatch() {
-      const necessidadeId = document.getElementById("selectChamado").value;
-      const topN = parseInt(document.getElementById("selectTopN").value);
-      const btn = document.getElementById("btnRodar");
-      const erroDiv = document.getElementById("matchErro");
-      const resultDiv = document.getElementById("matchResultado");
-
-      if (!necessidadeId) {
-        erroDiv.style.display = "block";
-        erroDiv.innerText = "Selecione um chamado primeiro.";
-        return;
-      }
-
-      erroDiv.style.display = "none";
-      btn.disabled = true;
-      btn.innerHTML = `<span class="mh-spinner"></span> Rodando...`;
-      resultDiv.innerHTML = `<div class="mh-empty">Executando matchmaking com Watson IA + algoritmo de correspondência...</div>`;
-
-      try {
-        const resp = await window.matchhelpFetch("/api/v1/vinculos", {
-          method: "POST",
-          body: { necessidade_id: necessidadeId, top_n: topN }
+      // Tabs
+      function trocarTab(nome) {
+        document.querySelectorAll(".tab-panel").forEach(el => {
+          el.classList.add("hidden");
         });
 
-        if (!resp.recomendacoes || !resp.recomendacoes.length) {
-          resultDiv.innerHTML = `
-            <div class="mh-empty">
-              <div style="font-size:40px;margin-bottom:12px">🔍</div>
-              <div style="font-style:normal;font-weight:600;font-size:15px;margin-bottom:8px">Nenhum voluntário encontrado</div>
-              <div>Verifique se existem voluntários com:<br>
-              ✓ status <strong>disponível</strong> · ✓ consentimento <strong>LGPD</strong> · ✓ habilidades em <strong>comum</strong> com o chamado</div>
-            </div>`;
-          return;
-        }
+        document.getElementById("tab-" + nome).classList.remove("hidden");
 
-        resultDiv.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <div>
-              <span style="font-weight:800;font-size:18px">${resp.total_recomendados}</span>
-              <span style="color:var(--mh-muted);font-size:13px;margin-left:6px">candidato${resp.total_recomendados > 1 ? 's' : ''} encontrado${resp.total_recomendados > 1 ? 's' : ''}</span>
-              ${badgeUrg(resp.nivel_urgencia)}
-            </div>
-            <span style="font-size:12px;color:var(--mh-muted)">Vínculos criados com status "aguardando aprovação"</span>
-          </div>
-          <div class="mh-list">${resp.recomendacoes.map(renderMatchCard).join("")}</div>
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+          btn.classList.remove(
+            "bg-mh-blue",
+            "text-white",
+            "shadow-lg",
+            "shadow-mh-blue/10",
+            "active-tab"
+          );
+
+          btn.classList.add(
+            "bg-white",
+            "border",
+            "border-slate-200",
+            "text-slate-600"
+          );
+        });
+
+        const ativo = document.querySelector(`[data-tab="${nome}"]`);
+
+        ativo.classList.remove(
+          "bg-white",
+          "border",
+          "border-slate-200",
+          "text-slate-600"
+        );
+
+        ativo.classList.add(
+          "bg-mh-blue",
+          "text-white",
+          "shadow-lg",
+          "shadow-mh-blue/10"
+        );
+
+        if (nome === "aprovacao") carregarPendentes();
+      }
+
+      function iniciais(nome) {
+        return (nome || "?")
+          .split(" ")
+          .map(n => n[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+      }
+
+      function scoreColor(score) {
+        if (score >= 0.7) return "bg-emerald-500";
+        if (score >= 0.4) return "bg-amber-500";
+        return "bg-red-500";
+      }
+
+      async function carregarChamados() {
+        try {
+          const data = await window.matchhelpFetch("/api/v1/necessidades");
+
+          const lista = Array.isArray(data)
+            ? data
+            : (data.items || []);
+
+          const sel = document.getElementById("selectChamado");
+
+          if (!lista.length) {
+            sel.innerHTML =
+              `<option value="">Nenhum chamado encontrado</option>`;
+            return;
+          }
+
+          sel.innerHTML = lista.map(n => {
+            const desc = (n.descricao_crise || "").slice(0, 80);
+
+            return `
+              <option value="${n.id}">
+                ${desc}${(n.descricao_crise || "").length > 80 ? "..." : ""}
+              </option>
+            `;
+          }).join("");
+
+        } catch (e) {
+          document.getElementById("selectChamado").innerHTML =
+            `<option value="">Erro ao carregar</option>`;
+        }
+      }
+
+      async function rodarMatch() {
+        const necessidadeId =
+          document.getElementById("selectChamado").value;
+
+        const topN =
+          parseInt(document.getElementById("selectTopN").value);
+
+        const erroDiv = document.getElementById("matchErro");
+        const resultDiv = document.getElementById("matchResultado");
+        const btn = document.getElementById("btnRodar");
+
+        erroDiv.style.display = "none";
+
+        btn.disabled = true;
+
+        btn.innerHTML = `
+          <div class="w-4 h-4 border-2 border-white border-r-transparent rounded-full animate-spin"></div>
+          Processando...
         `;
-        lucide.createIcons();
 
-        // Atualiza badge de pendentes
-        contarPendentes();
+        try {
+          const resp = await window.matchhelpFetch(
+            "/api/v1/vinculos",
+            {
+              method: "POST",
+              body: {
+                necessidade_id: necessidadeId,
+                top_n: topN
+              }
+            }
+          );
 
-      } catch (e) {
-        erroDiv.style.display = "block";
-        erroDiv.innerText = "Erro ao rodar matchmaking: " + e.message;
-        resultDiv.innerHTML = "";
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="play" style="width:14px;height:14px"></i> Rodar Match`;
-        lucide.createIcons();
-      }
-    }
-
-    function renderMatchCard(r, idx) {
-      const v = r.voluntario || {};
-      const ini = v.iniciais || iniciais(v.nome);
-      const skills = (r.habilidades_correspondentes || []).map(h => `<span class="mh-chip">${h}</span>`).join("");
-      const scorePct = Math.round((r.score_match || 0) * 100);
-      const color = scoreColor(r.score_match || 0);
-      const isRec = r.recomendado === true;
-
-      return `
-        <div class="mh-match-card ${isRec ? 'recomendado' : ''}">
-          <div class="card-header">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div class="mh-avatar">${ini}</div>
-              <div>
-                <div style="font-weight:700;font-size:15px">
-                  ${v.nome || "—"}
-                  ${isRec ? '<span class="mh-badge red" style="margin-left:8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="star" style="width:10px;height:10px"></i>Recomendado</span>' : ''}
-                </div>
-                <div style="font-size:12px;color:var(--mh-muted);margin-top:2px">
-                  Reputação: ${(v.reputacao ?? 0).toFixed(1)}/5
-                </div>
+          if (!resp.recomendacoes?.length) {
+            resultDiv.innerHTML = `
+              <div class="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+                <div class="text-5xl mb-4">🔍</div>
+                <h3 class="font-bold text-lg mb-2">
+                  Nenhum voluntário encontrado
+                </h3>
               </div>
-            </div>
-            <div class="mh-stat">
-              <span class="value" style="color:${color}">${scorePct}%</span>
-              <span>score</span>
-              <div class="mh-score-bar">
-                <div class="fill" style="width:${scorePct}%;background:${color}"></div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div style="display:flex;gap:16px;flex-wrap:wrap">
-              <span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mh-muted)">
-                <i data-lucide="map-pin" style="width:12px;height:12px"></i> ${fmtDistKm(r.distancia_km)}
-              </span>
-            </div>
-            ${skills ? `<div class="mh-chips">${skills}</div>` : ""}
-            ${r.justificativa ? `<div class="mh-justificativa"><i data-lucide="sparkles" style="width:12px;height:12px;vertical-align:-1px"></i> ${r.justificativa}</div>` : ""}
-          </div>
-        </div>
-      `;
-    }
+            `;
+            return;
+          }
 
-    // ======================================================================
-    // TAB 2: Caixa de Aprovação
-    // ======================================================================
-    async function contarPendentes() {
-      try {
-        const grupos = await window.matchhelpFetch("/api/v1/vinculos/pendentes");
-        const total = grupos.reduce((acc, g) => acc + (g.candidatos || []).length, 0);
-        const badge = document.getElementById("badge-pendentes");
-        if (total > 0) {
-          badge.style.display = "inline";
-          badge.textContent = total;
-        } else {
-          badge.style.display = "none";
+          resultDiv.innerHTML = resp.recomendacoes.map(r => {
+            const v = r.voluntario || {};
+            const scorePct = Math.round((r.score_match || 0) * 100);
+
+            return `
+              <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
+
+                  <div class="flex items-center gap-4">
+
+                    <div
+                      class="w-14 h-14 rounded-2xl bg-mh-blue text-white flex items-center justify-center font-black shadow-lg shadow-mh-blue/20">
+                      ${iniciais(v.nome)}
+                    </div>
+
+                    <div>
+                      <h3 class="text-xl font-bold text-slate-800">
+                        ${v.nome || "—"}
+                      </h3>
+
+                      <p class="text-sm text-slate-500 mt-1">
+                        Reputação:
+                        ${(v.reputacao ?? 0).toFixed(1)}/5
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="text-right">
+                    <div class="text-3xl font-black text-slate-800">
+                      ${scorePct}%
+                    </div>
+
+                    <div class="w-40 h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+                      <div
+                        class="h-full ${scoreColor(r.score_match || 0)}"
+                        style="width:${scorePct}%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                ${
+                  (r.habilidades_correspondentes || []).length
+                    ? `
+                  <div class="flex flex-wrap gap-2 mb-4">
+                    ${r.habilidades_correspondentes.map(h => `
+                      <span class="bg-mh-orange/10 text-mh-orange px-3 py-1 rounded-xl text-xs font-bold">
+                        ${h}
+                      </span>
+                    `).join("")}
+                  </div>
+                `
+                    : ""
+                }
+
+                ${
+                  r.justificativa
+                    ? `
+                  <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed">
+                    ${r.justificativa}
+                  </div>
+                `
+                    : ""
+                }
+
+              </div>
+            `;
+          }).join("");
+
+          contarPendentes();
+
+        } catch (e) {
+          erroDiv.style.display = "block";
+          erroDiv.innerText =
+            "Erro ao rodar matchmaking: " + e.message;
+
+        } finally {
+          btn.disabled = false;
+
+          btn.innerHTML = `
+            <i data-lucide="play" class="w-4 h-4"></i>
+            Rodar Match
+          `;
+
+          lucide.createIcons();
         }
-      } catch (_) {}
-    }
+      }
 
-    async function carregarPendentes() {
-      const erroDiv = document.getElementById("aprovacaoErro");
-      const lista = document.getElementById("aprovacaoLista");
-      erroDiv.style.display = "none";
-      lista.innerHTML = `<div class="mh-empty">Carregando pendências...</div>`;
+      async function contarPendentes() {
+        try {
+          const grupos =
+            await window.matchhelpFetch("/api/v1/vinculos/pendentes");
 
-      try {
-        const grupos = await window.matchhelpFetch("/api/v1/vinculos/pendentes");
-        if (!grupos.length) {
-          lista.innerHTML = `<div class="mh-empty">
-            <div style="font-size:40px;margin-bottom:12px">✅</div>
-            <div style="font-style:normal;font-weight:600;font-size:15px">Nenhum pré-match aguardando aprovação</div>
-            <div style="margin-top:6px">Rode o match na aba anterior para gerar candidatos.</div>
-          </div>`;
-          document.getElementById("badge-pendentes").style.display = "none";
-          return;
+          const total = grupos.reduce(
+            (acc, g) => acc + (g.candidatos || []).length,
+            0
+          );
+
+          const badge =
+            document.getElementById("badge-pendentes");
+
+          if (total > 0) {
+            badge.classList.remove("hidden");
+            badge.innerText = total;
+          } else {
+            badge.classList.add("hidden");
+          }
+
+        } catch (_) {}
+      }
+
+      async function carregarPendentes() {
+        const lista =
+          document.getElementById("aprovacaoLista");
+
+        try {
+          const grupos =
+            await window.matchhelpFetch("/api/v1/vinculos/pendentes");
+
+          if (!grupos.length) {
+            lista.innerHTML = `
+              <div class="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+                <div class="text-5xl mb-4">✅</div>
+                <h3 class="font-bold text-lg mb-2">
+                  Nenhum pré-match pendente
+                </h3>
+              </div>
+            `;
+            return;
+          }
+
+          lista.innerHTML = grupos.map(g => `
+            <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+
+              <div class="mb-6">
+                <h3 class="text-xl font-bold text-slate-800 mb-2">
+                  ${(g.necessidade?.descricao_crise || "").slice(0, 120)}
+                </h3>
+
+                <p class="text-sm text-slate-500">
+                  ${g.necessidade?.endereco_texto || ""}
+                </p>
+              </div>
+
+              <div class="space-y-4">
+                ${(g.candidatos || []).map(c => `
+                  <div class="border border-slate-100 rounded-2xl p-5">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                      <div>
+                        <div class="font-bold text-slate-800">
+                          ${c.voluntario?.nome || "—"}
+                        </div>
+
+                        <div class="text-sm text-slate-500 mt-1">
+                          ${(c.score_match * 100).toFixed(0)}% de compatibilidade
+                        </div>
+                      </div>
+
+                      <div class="flex gap-3">
+
+                        <button
+                          onclick="rejeitar('${c.vinculo_id}', this)"
+                          class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition text-sm font-semibold">
+                          Rejeitar
+                        </button>
+
+                        <button
+                          onclick="aprovar('${c.vinculo_id}', this)"
+                          class="px-4 py-2 rounded-xl bg-mh-blue text-white hover:bg-mh-orange transition text-sm font-semibold">
+                          Aprovar
+                        </button>
+
+                      </div>
+                    </div>
+
+                  </div>
+                `).join("")}
+              </div>
+
+            </div>
+          `).join("");
+
+          lucide.createIcons();
+
+        } catch (e) {
+          document.getElementById("aprovacaoErro").style.display = "block";
+
+          document.getElementById("aprovacaoErro").innerText =
+            "Erro ao carregar pendências: " + e.message;
         }
-        lista.innerHTML = grupos.map(renderGrupo).join("");
-        lucide.createIcons();
-
-        const total = grupos.reduce((acc, g) => acc + (g.candidatos || []).length, 0);
-        const badge = document.getElementById("badge-pendentes");
-        badge.style.display = "inline";
-        badge.textContent = total;
-      } catch (e) {
-        erroDiv.style.display = "block";
-        erroDiv.innerText = "Falha ao carregar pendências: " + e.message;
-        lista.innerHTML = "";
       }
-    }
 
-    function renderGrupo(g) {
-      const n = g.necessidade;
-      const desc = (n.descricao_crise || "").slice(0, 200);
-      const candidatos = (g.candidatos || []).map(renderCandidato).join("");
-      return `
-        <div class="mh-grupo">
-          <div class="mh-grupo-header">
-            <div>
-              <div style="font-weight:600;font-size:15px;margin-bottom:4px">${desc}${(n.descricao_crise || "").length > 200 ? "..." : ""}</div>
-              <div class="meta" style="display:flex;gap:12px;color:var(--mh-muted);font-size:12px">
-                ${n.endereco_texto ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i> ${n.endereco_texto}</span>` : ""}
-                ${n.criado_em ? `<span><i data-lucide="clock" style="width:12px;height:12px"></i> ${new Date(n.criado_em).toLocaleString("pt-BR")}</span>` : ""}
-              </div>
-            </div>
-            ${badgeUrg(n.nivel_urgencia)}
-          </div>
-          <div class="mh-list" style="margin-top:8px">${candidatos}</div>
-        </div>
-      `;
-    }
+      async function aprovar(id) {
+        try {
+          await window.matchhelpFetch(
+            `/api/v1/vinculos/${id}/aprovar`,
+            { method: "POST" }
+          );
 
-    function renderCandidato(r) {
-      const v = r.voluntario || {};
-      const ini = v.iniciais || iniciais(v.nome);
-      const skills = (r.habilidades_correspondentes || []).map(h => `<span class="mh-chip">${h}</span>`).join("");
-      const dist = fmtDist(r.distancia_m);
-      const isRec = r.recomendado === true;
-      const scorePct = Math.round((r.score_match || 0) * 100);
-      const color = scoreColor(r.score_match || 0);
+          carregarPendentes();
 
-      return `
-        <div class="mh-match-card ${isRec ? 'recomendado' : ''}" data-vinculo-id="${r.vinculo_id}">
-          <div class="card-header">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div class="mh-avatar small">${ini}</div>
-              <div>
-                <div style="font-weight:700;font-size:14px">
-                  ${v.nome || "—"}
-                  ${isRec ? '<span class="mh-badge red" style="margin-left:6px;display:inline-flex;align-items:center;gap:3px"><i data-lucide="star" style="width:10px;height:10px"></i>Recomendado</span>' : ''}
-                </div>
-                <div style="font-size:12px;color:var(--mh-muted);display:flex;gap:12px;margin-top:2px">
-                  <span><i data-lucide="map-pin" style="width:11px;height:11px"></i> ${dist}</span>
-                  <span style="font-weight:700;color:${color}">${scorePct}% score</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          ${skills ? `<div class="mh-chips" style="margin-top:6px">${skills}</div>` : ""}
-          ${r.justificativa ? `<div class="mh-justificativa"><i data-lucide="sparkles" style="width:12px;height:12px;vertical-align:-1px"></i> ${r.justificativa}</div>` : ""}
-          <div class="card-actions">
-            <button class="mh-btn ghost" onclick="rejeitar('${r.vinculo_id}', this)">
-              <i data-lucide="x" style="width:13px;height:13px"></i> Rejeitar
-            </button>
-            <button class="mh-btn" onclick="aprovar('${r.vinculo_id}', this)">
-              <i data-lucide="check" style="width:13px;height:13px"></i> Aprovar
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    async function aprovar(id, btn) {
-      const erroDiv = document.getElementById("aprovacaoErro");
-      erroDiv.style.display = "none";
-      btn.disabled = true;
-      try {
-        await window.matchhelpFetch(`/api/v1/vinculos/${id}/aprovar`, { method: "POST" });
-        const toast = document.getElementById("aprovacaoToast");
-        const link = `voluntario-decisao.html?vinculo=${id}`;
-        const linkAbs = `${location.origin}${location.pathname.replace(/match\.html$/, "")}${link}`;
-        toast.innerHTML =
-          `<i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:-2px"></i> ` +
-          `Aprovado! Em produção, o link abaixo seria enviado via WhatsApp ao voluntário:<br>` +
-          `<a href="${link}" target="_blank" style="color:#065f46;text-decoration:underline;word-break:break-all">${linkAbs}</a>`;
-        toast.style.display = "block";
-        lucide.createIcons();
-        await carregarPendentes();
-      } catch (e) {
-        erroDiv.style.display = "block";
-        erroDiv.innerText = "Falha ao aprovar: " + e.message;
-        btn.disabled = false;
+        } catch (e) {
+          alert("Erro ao aprovar");
+        }
       }
-    }
 
-    async function rejeitar(id, btn) {
-      const erroDiv = document.getElementById("aprovacaoErro");
-      erroDiv.style.display = "none";
-      btn.disabled = true;
-      try {
-        await window.matchhelpFetch(`/api/v1/vinculos/${id}/rejeitar`, { method: "POST" });
-        await carregarPendentes();
-      } catch (e) {
-        erroDiv.style.display = "block";
-        erroDiv.innerText = "Falha ao rejeitar: " + e.message;
-        btn.disabled = false;
+      async function rejeitar(id) {
+        try {
+          await window.matchhelpFetch(
+            `/api/v1/vinculos/${id}/rejeitar`,
+            { method: "POST" }
+          );
+
+          carregarPendentes();
+
+        } catch (e) {
+          alert("Erro ao rejeitar");
+        }
       }
-    }
 
-    // ======================================================================
-    // Init
-    // ======================================================================
-    lucide.createIcons();
-    carregarChamados();
-    contarPendentes();
-  </script>
+      lucide.createIcons();
+
+      carregarChamados();
+
+      contarPendentes();
+    </script>
   </body>
 </html>

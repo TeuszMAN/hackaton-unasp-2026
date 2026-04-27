@@ -4,158 +4,433 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MatchHelp — Voluntários</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              mh: {
+                blue: '#2b529a',
+                orange: '#f69331',
+                teal: '#37a991',
+                lightblue: '#1b91f6',
+                purple: '#7a52cc',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="asset/css/style-home.css" />
   </head>
-  <body>
-    <div class="mh-shell">
-      <header class="mh-topbar">
-        <div class="mh-brand">
+
+  <body class="bg-white text-slate-900 overflow-x-hidden">
+
+    <!-- Background -->
+    <div
+      class="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-10">
+      <div
+        class="absolute top-20 left-10 w-72 h-72 bg-mh-orange rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-10 right-10 w-96 h-96 bg-mh-blue rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Navbar -->
+    <header
+      class="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+        <div class="flex items-center gap-3">
+          <img
+            src="asset/img/Logo.png"
+            alt="MatchHelp Logo"
+            onerror="this.src='https://placehold.co/40x40?text=MH'"
+            width="42"
+            height="42" />
+
           <div>
-            <img src="asset/img/Logo.png" alt="MatchHelp Logo"
-              onerror="this.src='https://placehold.co/40x40?text=MH'"
-              width="40px" height="40px">
-          </div>
-          <div>
-            <div class="mh-brand-name"><span
-                class="accent">Match</span>Help</div>
-            <div class="mh-brand-sub">Voluntários</div>
+            <div
+              class="text-2xl font-extrabold italic tracking-tight text-mh-blue">
+              Match<span class="text-mh-orange">Help</span>
+            </div>
+            <div
+              class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+              Voluntários
+            </div>
           </div>
         </div>
-        <nav class="mh-topnav">
-          <a href="home.html">Início</a>
-          <a href="voluntarios.html" class="active">Voluntários</a>
-          <a href="instituicoes.html">Instituições</a>
-          <a href="chamados.html">Chamados</a>
-          <a href="match.html">Match</a>
+
+        <nav
+          class="hidden md:flex items-center gap-3 text-sm font-semibold text-slate-600">
+
+          <a href="home.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Início
+          </a>
+
+          <a href="voluntarios.html"
+            class="text-mh-blue bg-mh-orange/10 border border-mh-orange px-4 py-2 rounded-xl">
+            Voluntários
+          </a>
+
+          <a href="instituicoes.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Instituições
+          </a>
+
+          <a href="chamados.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Chamados
+          </a>
+
+          <a href="match.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Match
+          </a>
+
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main class="mh-main">
-        <a href="home.html" class="mh-back"><i data-lucide="arrow-left"
-            style="width:14px;height:14px"></i> Voltar ao painel</a>
-        <div class="mh-page-header">
+    <!-- Main -->
+    <main class="pt-36 pb-24 px-6">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div
+          class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+
           <div>
-            <h1>Voluntários</h1>
-            <p>Pessoas cadastradas e prontas para serem chamadas. Filtre como
-              precisar.</p>
+            <a href="home.html"
+              class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-mh-blue transition mb-4">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              Voltar ao painel
+            </a>
+
+            <h1
+              class="text-5xl font-extrabold tracking-tight mb-3 text-slate-800">
+              Voluntários
+            </h1>
+
+            <p class="text-slate-500 text-lg max-w-2xl leading-relaxed">
+              Pessoas cadastradas e prontas para serem chamadas em situações
+              emergenciais. Utilize os filtros para encontrar rapidamente os
+              voluntários ideais.
+            </p>
           </div>
-          <button class="mh-btn ghost" onclick="carregar()"><i
-              data-lucide="refresh-cw" style="width:14px;height:14px"></i>
-            Atualizar</button>
+
+          <button
+            onclick="carregar()"
+            class="bg-mh-blue text-white px-6 py-3 rounded-2xl font-semibold hover:bg-mh-orange transition flex items-center gap-2 shadow-lg shadow-mh-blue/10">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            Atualizar
+          </button>
         </div>
 
-        <div class="mh-toolbar">
-          <input id="busca" class="mh-input" type="text"
-            placeholder="Buscar por nome..." />
-          <select id="filtroInstituicao" class="mh-select">
+        <!-- Toolbar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
+
+          <input
+            id="busca"
+            type="text"
+            placeholder="Buscar por nome..."
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition" />
+
+          <select
+            id="filtroInstituicao"
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition">
             <option value>Todas as instituições</option>
           </select>
-          <select id="filtroDisponibilidade" class="mh-select">
+
+          <select
+            id="filtroDisponibilidade"
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition">
             <option value>Qualquer disponibilidade</option>
             <option value="disponivel">Disponível</option>
             <option value="ocupado">Ocupado</option>
             <option value="indisponivel">Indisponível</option>
           </select>
-          <input id="filtroHabilidade" class="mh-input" type="text"
-            placeholder="Habilidade (ex: medico)" />
+
+          <input
+            id="filtroHabilidade"
+            type="text"
+            placeholder="Habilidade (ex: médico)"
+            class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-mh-orange/10 focus:border-mh-orange transition" />
         </div>
 
-        <div id="erro" class="mh-error" style="display:none"></div>
-        <div id="lista" class="mh-list">
-          <div class="mh-empty">Carregando voluntários...</div>
+        <!-- Error -->
+        <div
+          id="erro"
+          style="display:none"
+          class="mb-8 bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl text-sm">
         </div>
-      </main>
 
-      <footer class="mh-footer">
-        MatchHelp · API: <code id="api-url">—</code>
-      </footer>
-    </div>
+        <!-- Lista -->
+        <div id="lista" class="grid grid-cols-1 gap-6">
+          <div
+            class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm text-slate-400">
+            Carregando voluntários...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-100 bg-slate-50 py-10 text-center">
+      <div class="max-w-7xl mx-auto px-6">
+        <p class="text-slate-400 text-sm mb-2">
+          MatchHelp · API:
+          <code id="api-url">—</code>
+        </p>
+      </div>
+    </footer>
 
     <script src="asset/js/api-config.js"></script>
+
     <script>
-    document.getElementById("api-url").innerText = window.MATCHHELP_API;
-    let voluntariosCache = [];
-    let instituicoesCache = [];
+      document.getElementById("api-url").innerText = window.MATCHHELP_API;
 
-    function badgeStatus(s) {
-      const map = { disponivel: ["green","Disponível"], ocupado: ["amber","Ocupado"], indisponivel: ["slate","Indisponível"] };
-      const [cls, txt] = map[s] || ["slate", s || "—"];
-      return `<span class="mh-badge ${cls}">${txt}</span>`;
-    }
+      let voluntariosCache = [];
+      let instituicoesCache = [];
 
-    function render() {
-      const q = document.getElementById("busca").value.trim().toLowerCase();
-      const instId = document.getElementById("filtroInstituicao").value;
-      const disp = document.getElementById("filtroDisponibilidade").value;
-      const hab = document.getElementById("filtroHabilidade").value.trim().toLowerCase();
-      const lista = document.getElementById("lista");
+      function badgeStatus(status) {
+        const map = {
+          disponivel:
+            "bg-emerald-100 text-emerald-700",
+          ocupado:
+            "bg-amber-100 text-amber-700",
+          indisponivel:
+            "bg-slate-100 text-slate-600",
+        };
 
-      const inst = instituicoesCache.find(i => i.id === instId);
-      const filtrados = voluntariosCache.filter(v => {
-        if (q && !(v.nome || "").toLowerCase().includes(q)) return false;
-        if (disp && v.disponibilidade !== disp) return false;
-        if (hab && !(v.habilidades || []).some(h => h.toLowerCase().includes(hab))) return false;
-        if (instId) {
-          // Vínculo via proximidade textual (cidade/endereço) já que voluntários
-          // não pertencem diretamente a uma instituição no modelo.
-          const ref = (inst?.contato?.cidade || inst?.nome || "").toLowerCase();
-          const end = (v.endereco_texto || "").toLowerCase();
-          if (ref && !end.includes(ref)) return false;
+        const cls = map[status] || map.indisponivel;
+
+        return `
+          <span class="${cls} px-4 py-2 rounded-xl text-xs font-bold">
+            ${status || "—"}
+          </span>
+        `;
+      }
+
+      function render() {
+        const q = document.getElementById("busca").value.trim().toLowerCase();
+        const instId = document.getElementById("filtroInstituicao").value;
+        const disp = document.getElementById("filtroDisponibilidade").value;
+        const hab = document.getElementById("filtroHabilidade").value.trim().toLowerCase();
+
+        const lista = document.getElementById("lista");
+
+        const inst = instituicoesCache.find(i => i.id === instId);
+
+        const filtrados = voluntariosCache.filter(v => {
+
+          if (q && !(v.nome || "").toLowerCase().includes(q)) {
+            return false;
+          }
+
+          if (disp && v.disponibilidade !== disp) {
+            return false;
+          }
+
+          if (
+            hab &&
+            !(v.habilidades || []).some(h =>
+              h.toLowerCase().includes(hab)
+            )
+          ) {
+            return false;
+          }
+
+          if (instId) {
+            const ref = (
+              inst?.contato?.cidade ||
+              inst?.nome ||
+              ""
+            ).toLowerCase();
+
+            const end = (v.endereco_texto || "").toLowerCase();
+
+            if (ref && !end.includes(ref)) {
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+        if (!filtrados.length) {
+          lista.innerHTML = `
+            <div class="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 shadow-sm">
+              Nenhum voluntário encontrado.
+            </div>
+          `;
+          return;
         }
-        return true;
+
+        lista.innerHTML = filtrados.map(v => {
+
+          const inicial = (v.nome || "?")
+            .charAt(0)
+            .toUpperCase();
+
+          return `
+            <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+
+                <div class="flex items-start gap-5">
+
+                  <div class="w-16 h-16 rounded-2xl bg-mh-blue text-white flex items-center justify-center font-black text-xl shadow-lg shadow-mh-blue/20">
+                    ${inicial}
+                  </div>
+
+                  <div>
+
+                    <h3 class="text-2xl font-bold text-slate-800 mb-3">
+                      ${v.nome || "—"}
+                    </h3>
+
+                    <div class="flex flex-wrap gap-4 text-sm text-slate-500 mb-5">
+
+                      ${
+                        v.telefone
+                          ? `
+                        <span class="flex items-center gap-2">
+                          <i data-lucide="phone" class="w-4 h-4"></i>
+                          ${v.telefone}
+                        </span>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        v.email
+                          ? `
+                        <span class="flex items-center gap-2">
+                          <i data-lucide="mail" class="w-4 h-4"></i>
+                          ${v.email}
+                        </span>
+                      `
+                          : ""
+                      }
+
+                      ${
+                        v.endereco_texto
+                          ? `
+                        <span class="flex items-center gap-2">
+                          <i data-lucide="map-pin" class="w-4 h-4"></i>
+                          ${v.endereco_texto}
+                        </span>
+                      `
+                          : ""
+                      }
+
+                      <span class="flex items-center gap-2">
+                        <i data-lucide="star" class="w-4 h-4"></i>
+                        ${(v.reputacao ?? 0).toFixed(1)}
+                      </span>
+
+                    </div>
+
+                    ${
+                      (v.habilidades || []).length
+                        ? `
+                      <div class="flex flex-wrap gap-2">
+                        ${v.habilidades.map(h => `
+                          <span class="bg-mh-orange/10 text-mh-orange px-3 py-2 rounded-xl text-xs font-semibold">
+                            ${h}
+                          </span>
+                        `).join("")}
+                      </div>
+                    `
+                        : ""
+                    }
+
+                  </div>
+                </div>
+
+                <div>
+                  ${badgeStatus(v.disponibilidade)}
+                </div>
+
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        lucide.createIcons();
+      }
+
+      async function carregar() {
+        const erro = document.getElementById("erro");
+
+        erro.style.display = "none";
+
+        try {
+
+          const [vols, insts] = await Promise.all([
+            window.matchhelpFetch("/api/v1/voluntarios").catch(() => []),
+            window.matchhelpFetch("/api/v1/instituicoes").catch(() => []),
+          ]);
+
+          voluntariosCache = Array.isArray(vols)
+            ? vols
+            : (vols.items || []);
+
+          instituicoesCache = Array.isArray(insts)
+            ? insts
+            : (insts.items || []);
+
+          const sel = document.getElementById("filtroInstituicao");
+
+          sel.innerHTML =
+            `<option value="">Todas as instituições</option>` +
+            instituicoesCache
+              .map(i => `<option value="${i.id}">${i.nome}</option>`)
+              .join("");
+
+          render();
+
+        } catch (e) {
+
+          erro.style.display = "block";
+
+          erro.innerText =
+            "Falha ao carregar dados da API: " + e.message;
+
+          document.getElementById("lista").innerHTML = `
+            <div class="bg-white border border-slate-100 rounded-3xl p-10 text-center text-slate-400 shadow-sm">
+              Sem dados para exibir.
+            </div>
+          `;
+        }
+      }
+
+      [
+        "busca",
+        "filtroInstituicao",
+        "filtroDisponibilidade",
+        "filtroHabilidade"
+      ].forEach(id => {
+
+        document
+          .getElementById(id)
+          .addEventListener("input", render);
+
+        document
+          .getElementById(id)
+          .addEventListener("change", render);
       });
 
-      if (!filtrados.length) {
-        lista.innerHTML = `<div class="mh-empty">Nenhum voluntário encontrado com esses filtros.</div>`;
-        return;
-      }
-      lista.innerHTML = filtrados.map(v => `
-        <div class="mh-row">
-          <div>
-            <div class="title">${v.nome || "—"}</div>
-            <div class="meta">
-              <span><i data-lucide="phone" style="width:12px;height:12px"></i>${v.telefone || "—"}</span>
-              ${v.email ? `<span><i data-lucide="mail" style="width:12px;height:12px"></i>${v.email}</span>` : ""}
-              ${v.endereco_texto ? `<span><i data-lucide="map-pin" style="width:12px;height:12px"></i>${v.endereco_texto}</span>` : ""}
-              <span><i data-lucide="star" style="width:12px;height:12px"></i>${(v.reputacao ?? 0).toFixed(1)}</span>
-            </div>
-            ${(v.habilidades || []).length ? `<div class="mh-chips">${v.habilidades.map(h => `<span class="mh-chip">${h}</span>`).join("")}</div>` : ""}
-          </div>
-          <div class="right">${badgeStatus(v.disponibilidade)}</div>
-        </div>
-      `).join("");
       lucide.createIcons();
-    }
-
-    async function carregar() {
-      const erro = document.getElementById("erro");
-      erro.style.display = "none";
-      try {
-        const [vols, insts] = await Promise.all([
-          window.matchhelpFetch("/api/v1/voluntarios").catch(() => []),
-          window.matchhelpFetch("/api/v1/instituicoes").catch(() => []),
-        ]);
-        voluntariosCache = Array.isArray(vols) ? vols : (vols.items || []);
-        instituicoesCache = Array.isArray(insts) ? insts : (insts.items || []);
-        const sel = document.getElementById("filtroInstituicao");
-        sel.innerHTML = `<option value="">Todas as instituições</option>` +
-          instituicoesCache.map(i => `<option value="${i.id}">${i.nome}</option>`).join("");
-        render();
-      } catch (e) {
-        erro.style.display = "block";
-        erro.innerText = "Falha ao carregar dados da API: " + e.message;
-        document.getElementById("lista").innerHTML = "";
-      }
-    }
-
-    ["busca","filtroInstituicao","filtroDisponibilidade","filtroHabilidade"].forEach(id => {
-      document.getElementById(id).addEventListener("input", render);
-      document.getElementById(id).addEventListener("change", render);
-    });
-
-    lucide.createIcons();
-    carregar();
-  </script>
+      carregar();
+    </script>
   </body>
 </html>
