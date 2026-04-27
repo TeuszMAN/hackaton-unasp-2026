@@ -4,100 +4,252 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MatchHelp — Painel</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              mh: {
+                blue: '#2b529a',
+                orange: '#f69331',
+                teal: '#37a991',
+                lightblue: '#1b91f6',
+                purple: '#7a52cc',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="asset/css/style-home.css" />
   </head>
-  <body>
-    <div class="mh-shell">
-      <header class="mh-topbar">
-        <div class="mh-brand">
+
+  <body class="bg-white text-slate-900 overflow-x-hidden">
+
+    <!-- Background Effects -->
+    <div
+      class="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-10">
+      <div
+        class="absolute top-20 left-10 w-72 h-72 bg-mh-orange rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-10 right-10 w-96 h-96 bg-mh-blue rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Navbar -->
+    <header
+      class="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+
+        <div class="flex items-center gap-3">
+          <img
+            src="asset/img/Logo.png"
+            alt="MatchHelp Logo"
+            onerror="this.src='https://placehold.co/40x40?text=MH'"
+            width="42"
+            height="42" />
+
           <div>
-            <img src="asset/img/Logo.png" alt="MatchHelp Logo"
-              onerror="this.src='https://placehold.co/40x40?text=MH'"
-              width="40px" height="40px">
-          </div>
-          <div>
-            <div class="mh-brand-name"><span
-                class="accent">Match</span>Help</div>
-            <div class="mh-brand-sub">Painel central</div>
+            <div
+              class="text-2xl font-extrabold italic tracking-tight text-mh-blue">
+              Match<span class="text-mh-orange">Help</span>
+            </div>
+            <div
+              class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+              Painel central
+            </div>
           </div>
         </div>
-        <nav class="mh-topnav">
-          <a href="home.html" class="active">Início</a>
-          <a href="voluntarios.html">Voluntários</a>
-          <a href="instituicoes.html">Instituições</a>
-          <a href="chamados.html">Chamados</a>
-          <a href="match.html">Match</a>
-        </nav>
-      </header>
 
-      <main class="mh-main">
-        <section class="mh-hero">
-          <h1>Tudo do <span class="accent">MatchHelp</span> em um só lugar</h1>
-          <p>
-            Conectamos quem precisa de ajuda com quem pode ajudar. Escolha por
-            onde começar — voluntários, instituições ou chamados de crise.
+        <nav
+          class="hidden md:flex items-center gap-3 text-sm font-semibold text-slate-600">
+
+          <a href="home.html"
+            class="text-mh-blue bg-mh-orange/10 border border-mh-orange px-4 py-2 rounded-xl">
+            Início
+          </a>
+
+          <a href="voluntarios.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Voluntários
+          </a>
+
+          <a href="instituicoes.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Instituições
+          </a>
+
+          <a href="chamados.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Chamados
+          </a>
+
+          <a href="match.html"
+            class="hover:bg-slate-100 px-4 py-2 rounded-xl transition">
+            Match
+          </a>
+
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-36 pb-24 px-6">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Hero -->
+        <section class="text-center mb-20">
+          <h1
+            class="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+            Tudo do <span class="text-mh-blue italic">Match</span><span
+              class="text-mh-orange italic">Help</span><br />
+            em um só lugar.
+          </h1>
+
+          <p
+            class="max-w-3xl mx-auto text-lg text-slate-500 leading-relaxed font-medium">
+            Conectamos quem precisa de ajuda com quem pode ajudar.
+            Gerencie voluntários, instituições e crises através de uma
+            plataforma moderna, rápida e inteligente.
           </p>
         </section>
 
-        <section class="mh-hub-grid">
-          <a href="voluntarios.html" class="mh-hub-card">
-            <div class="mh-hub-icon"><i data-lucide="users"></i></div>
-            <h3>Voluntários</h3>
-            <p>
+        <!-- Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+
+          <!-- Card -->
+          <a
+            href="voluntarios.html"
+            class="group bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+            <div
+              class="w-16 h-16 rounded-2xl bg-mh-orange/10 text-mh-orange flex items-center justify-center mb-6">
+              <i data-lucide="users" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">
+              Voluntários
+            </h3>
+
+            <p class="text-slate-500 text-sm leading-relaxed mb-8">
               Lista completa de voluntários cadastrados. Filtre por instituição,
               habilidade ou disponibilidade para encontrar quem você precisa.
             </p>
-            <span class="mh-hub-cta">Abrir <i data-lucide="arrow-right"
-                style="width:14px;height:14px"></i></span>
+
+            <div class="flex items-center gap-2 text-mh-blue font-bold text-sm">
+              Abrir
+              <i data-lucide="arrow-right"
+                class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </div>
           </a>
 
-          <a href="instituicoes.html" class="mh-hub-card">
-            <div class="mh-hub-icon"><i data-lucide="building-2"></i></div>
-            <h3>Instituições</h3>
-            <p>
-              Todas as instituições parceiras já cadastradas na plataforma, com
-              seus contatos e o histórico de chamados abertos.
+          <!-- Card -->
+          <a
+            href="instituicoes.html"
+            class="group bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+            <div
+              class="w-16 h-16 rounded-2xl bg-mh-lightblue/10 text-mh-lightblue flex items-center justify-center mb-6">
+              <i data-lucide="building-2" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">
+              Instituições
+            </h3>
+
+            <p class="text-slate-500 text-sm leading-relaxed mb-8">
+              Todas as instituições parceiras já cadastradas na plataforma,
+              com contatos e histórico de chamados registrados.
             </p>
-            <span class="mh-hub-cta">Abrir <i data-lucide="arrow-right"
-                style="width:14px;height:14px"></i></span>
+
+            <div class="flex items-center gap-2 text-mh-blue font-bold text-sm">
+              Abrir
+              <i data-lucide="arrow-right"
+                class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </div>
           </a>
 
-          <a href="chamados.html" class="mh-hub-card">
-            <div class="mh-hub-icon"><i data-lucide="siren"></i></div>
-            <h3>Chamados / Desastres</h3>
-            <p>
-              Necessidades de crise registradas em linguagem natural. Veja
-              urgência, status e habilidades requeridas em cada chamado.
+          <!-- Card -->
+          <a
+            href="chamados.html"
+            class="group bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+            <div
+              class="w-16 h-16 rounded-2xl bg-red-100 text-red-500 flex items-center justify-center mb-6">
+              <i data-lucide="siren" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">
+              Chamados
+            </h3>
+
+            <p class="text-slate-500 text-sm leading-relaxed mb-8">
+              Necessidades de crise registradas em linguagem natural com nível
+              de urgência, status e habilidades necessárias.
             </p>
-            <span class="mh-hub-cta">Abrir <i data-lucide="arrow-right"
-                style="width:14px;height:14px"></i></span>
+
+            <div class="flex items-center gap-2 text-mh-blue font-bold text-sm">
+              Abrir
+              <i data-lucide="arrow-right"
+                class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </div>
           </a>
 
-          <a href="match.html" class="mh-hub-card">
-            <div class="mh-hub-icon"><i data-lucide="flame"></i></div>
-            <h3>Match</h3>
-            <p>
-              Rode o algoritmo de correspondência: escolha um chamado e veja os
-              voluntários mais aderentes por skill, proximidade e reputação.
+          <!-- Card -->
+          <a
+            href="match.html"
+            class="group bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+            <div
+              class="w-16 h-16 rounded-2xl bg-mh-teal/10 text-mh-teal flex items-center justify-center mb-6">
+              <i data-lucide="flame" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">
+              Match
+            </h3>
+
+            <p class="text-slate-500 text-sm leading-relaxed mb-8">
+              Rode o algoritmo de correspondência entre crises e voluntários
+              considerando skill, proximidade e reputação.
             </p>
-            <span class="mh-hub-cta">Abrir <i data-lucide="arrow-right"
-                style="width:14px;height:14px"></i></span>
+
+            <div class="flex items-center gap-2 text-mh-blue font-bold text-sm">
+              Abrir
+              <i data-lucide="arrow-right"
+                class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </div>
           </a>
         </section>
-      </main>
+      </div>
+    </main>
 
-      <footer class="mh-footer">
-        MatchHelp · Hackathon UNASP 2026 · API: <code id="api-url">—</code>
-      </footer>
-    </div>
+    <!-- Footer -->
+    <footer class="border-t border-slate-100 bg-slate-50 py-10 text-center">
+      <div class="max-w-7xl mx-auto px-6">
+        <p class="text-slate-400 text-sm mb-2">
+          MatchHelp · Hackathon UNASP 2026
+        </p>
+
+        <p class="text-xs text-slate-300">
+          API:
+          <code id="api-url">—</code>
+        </p>
+      </div>
+    </footer>
 
     <script src="asset/js/api-config.js"></script>
+
     <script>
       document.getElementById("api-url").innerText = window.MATCHHELP_API;
+
       lucide.createIcons();
 
-      // Configuração do IBM Watson Orchestrate
+      // IBM Watson Orchestrate
       window.wxOConfiguration = {
         orchestrationID: "3d7ed1c2090b4b5e9bcdead3a89d1f60_6f41ae2b-4456-4224-96b4-69de8e405c58",
         hostURL: "https://au-syd.watson-orchestrate.cloud.ibm.com",
@@ -110,13 +262,14 @@
         },
       };
 
-      // Loader do Script IBM
       setTimeout(function () {
         const s = document.createElement("script");
         s.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
+
         s.onload = () => {
           if (window.wxoLoader) wxoLoader.init();
         };
+
         document.head.appendChild(s);
       }, 500);
     </script>
