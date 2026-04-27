@@ -1,6 +1,9 @@
-// ATENÇÃO: Verifique se esta URL é exatamente a do seu terminal ngrok
-const NGROK_URL = "https://coveting-economy-tingling.ngrok-free.dev";
-document.getElementById("api-url-text").innerText = NGROK_URL;
+// URL base resolvida em api-config.js (window.MATCHHELP_API).
+// Ordem: localStorage → <meta> → window.location.origin → fallback VPS.
+const API_BASE_URL =
+  (typeof window !== "undefined" && window.MATCHHELP_API) ||
+  "http://192.241.151.209:8000";
+document.getElementById("api-url-text").innerText = API_BASE_URL;
 
 async function fetchDados() {
   const tableBody = document.getElementById("tabela-voluntarios");
@@ -22,7 +25,6 @@ async function fetchDados() {
       method: "GET",
       mode: "cors",
       headers: {
-        "ngrok-skip-browser-warning": "true",
         Accept: "application/json",
       },
     };
@@ -30,7 +32,7 @@ async function fetchDados() {
     // 1. Buscar Estatísticas (/api/v1/estatisticas)
     console.log("Buscando estatísticas...");
     const statsRes = await fetch(
-      `${NGROK_URL}/api/v1/estatisticas`,
+      `${API_BASE_URL}/api/v1/estatisticas`,
       fetchOptions,
     );
 
@@ -46,7 +48,10 @@ async function fetchDados() {
 
     // 2. Buscar Voluntários (/api/v1/voluntarios)
     console.log("Buscando lista de voluntários...");
-    const volRes = await fetch(`${NGROK_URL}/api/v1/voluntarios`, fetchOptions);
+    const volRes = await fetch(
+      `${API_BASE_URL}/api/v1/voluntarios`,
+      fetchOptions,
+    );
 
     if (volRes.ok) {
       const lista = await volRes.json();

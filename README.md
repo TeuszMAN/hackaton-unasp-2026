@@ -5,6 +5,13 @@
 
 API de orquestração que conecta **instituições em situação de crise** com **voluntários qualificados**, utilizando correspondência baseada em habilidades (_skill-based volunteering_) e proximidade geográfica. Projetada para integração com o **IBM watsonx Orchestrate** como Skill e com o **watsonx.ai (Granite)** para extração de habilidades a partir de relatos em linguagem natural.
 
+> 🌐 **Ambiente de produção (demo do hackathon):** http://192.241.151.209:8000
+> &nbsp;&nbsp;&nbsp;&nbsp;Painel: http://192.241.151.209:8000/painel &nbsp;|&nbsp;
+> Swagger: http://192.241.151.209:8000/docs &nbsp;|&nbsp;
+> Health: http://192.241.151.209:8000/health
+>
+> Push em `main` dispara redeploy automático via GitHub Actions + SSH na VPS (ver [`docs/AUTO_DEPLOY.md`](docs/AUTO_DEPLOY.md)).
+
 ---
 
 ## 📋 Índice
@@ -127,30 +134,42 @@ docker compose up --build
 
 ### 4. Acesse
 
-| Recurso | URL |
-|---|---|
-| Health Check | http://localhost:8000/ |
-| Swagger UI | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
-| OpenAPI JSON | http://localhost:8000/openapi.json |
-| pgAdmin | http://localhost:5050 |
+| Recurso | Local (`docker compose`) | VPS (produção do hackathon) |
+|---|---|---|
+| Painel web | http://localhost:8000/painel | http://192.241.151.209:8000/painel |
+| Health Check | http://localhost:8000/health | http://192.241.151.209:8000/health |
+| Swagger UI | http://localhost:8000/docs | http://192.241.151.209:8000/docs |
+| ReDoc | http://localhost:8000/redoc | http://192.241.151.209:8000/redoc |
+| OpenAPI JSON | http://localhost:8000/openapi.json | http://192.241.151.209:8000/openapi.json |
+| pgAdmin | http://localhost:5050 | _(não exposto publicamente)_ |
+
+> **Dica:** o painel detecta a URL da API via `window.location.origin`. Para
+> apontar para outra origem (ex: front local → API VPS), abra o DevTools e rode
+> `localStorage.setItem("matchhelp_api", "http://192.241.151.209:8000")`.
 
 ---
 
 ## 🎬 Fluxo de Demo Rápido
 
-Em 4 chamadas você vê o sistema completo funcionando:
+Em 4 chamadas você vê o sistema completo funcionando. Defina a base uma única vez:
+
+```bash
+# Local
+export API=http://localhost:8000
+# Ou contra a VPS de produção do hackathon
+# export API=http://192.241.151.209:8000
+```
 
 **1. Popula o banco com 15 voluntários em São Paulo**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/dev/seed-voluntarios-exemplo
+curl -X POST $API/api/v1/dev/seed-voluntarios-exemplo
 ```
 
 **2. Registra uma necessidade em linguagem natural**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/necessidades \
+curl -X POST $API/api/v1/necessidades \
   -H "Content-Type: application/json" \
   -d '{
     "descricao_crise": "Enchente atingiu nosso abrigo em Vila Nova. Precisamos urgente de atendimento médico para idosos e ajuda para resgate de famílias ilhadas.",
@@ -165,7 +184,7 @@ Resposta: `202 Accepted` com `resource_id`. Aguarde ~1 segundo para o enriquecim
 **3. Executa matchmaking**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/vinculos \
+curl -X POST $API/api/v1/vinculos \
   -H "Content-Type: application/json" \
   -d '{ "necessidade_id": "<RESOURCE_ID>", "top_n": 5 }'
 ```
@@ -175,9 +194,9 @@ Recebe uma lista ranqueada de voluntários com score composto, distância em km 
 **4. Voluntário aceita → contato exposto → conclui → feedback**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/vinculos/<VINCULO_ID>/aceitar
-curl -X POST http://localhost:8000/api/v1/vinculos/<VINCULO_ID>/concluir
-curl -X POST http://localhost:8000/api/v1/vinculos/<VINCULO_ID>/feedback \
+curl -X POST $API/api/v1/vinculos/<VINCULO_ID>/aceitar
+curl -X POST $API/api/v1/vinculos/<VINCULO_ID>/concluir
+curl -X POST $API/api/v1/vinculos/<VINCULO_ID>/feedback \
   -H "Content-Type: application/json" \
   -d '{ "voluntario_compareceu": true, "skill_adequada": true, "nota": 5 }'
 ```

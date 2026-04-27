@@ -18,7 +18,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import String, cast, select
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -44,9 +44,25 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Autenticação"])
     ),
 )
 def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
-    login_id = payload.login_id.lower()
+    login_id = payload.login_id.lower().strip()
 
-    candidatos = db.execute(select(models.Voluntario)).scalars().all()
+    # Sanity check: login_id é o prefixo hexadecimal do UUID (8 chars).
+    # Validar antes de consultar o banco evita query desnecessária e
+    # protege contra injeção em LIKE.
+    if len(login_id) != auth_svc.LOGIN_ID_LEN or not all(
+        c in "0123456789abcdef" for c in login_id
+    ):
+        raise HTTPException(status_code=401, detail="Credenciais inválidas.")
+
+    # Filtra direto no banco usando o prefixo do UUID — O(log n) com índice
+    # vs O(n) carregando a tabela inteira em memória.
+    stmt = (
+        select(models.Voluntario)
+        .where(cast(models.Voluntario.id, String).like(f"{login_id}%"))
+        .limit(2)
+    )
+    candidatos = list(db.execute(stmt).scalars().all())
+
     voluntario = next(
         (v for v in candidatos if auth_svc.login_id_de(v.id).lower() == login_id),
         None,

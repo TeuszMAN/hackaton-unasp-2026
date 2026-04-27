@@ -21,11 +21,20 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.services.ai import ContextoJustificativa, get_ia_service
+from app.services.ai import (
+    ContextoJustificativa,
+    IAFallbackKeywords,
+    get_ia_service,
+)
 from app.services.matching import MatchResult, encontrar_matches
 
 
 router = APIRouter(prefix="/api/v1/vinculos", tags=["Vínculos"])
+
+# Fallback determinístico reusado quando a IA falha — instanciado uma vez para
+# evitar custo de inicialização por requisição. Garante que `justificativa`
+# nunca seja None quando o LLM cair, preservando a UX do painel.
+_fallback_justificativa = IAFallbackKeywords()
 
 
 # ---------------------------------------------------------------------------
@@ -139,10 +148,21 @@ async def executar_matchmaking(
             nivel_urgencia=necessidade.nivel_urgencia,
             descricao_necessidade=necessidade.descricao_crise or "",
         )
+        # Cadeia de fallback em três camadas:
+        #   1. Provedor configurado (watsonx Granite ou stub determinístico)
+        #   2. Fallback de palavras-chave local (sempre disponível, sem rede)
+        #   3. String fixa — garantia última de UX se tudo cair
+        justificativa: str | None = None
         try:
             justificativa = await ia.justificar_match(ctx)
         except Exception:
-            justificativa = None
+            try:
+                justificativa = await _fallback_justificativa.justificar_match(ctx)
+            except Exception:
+                justificativa = (
+                    "Recomendado pelo algoritmo com base em skills, "
+                    "proximidade e reputação."
+                )
         recomendacoes.append(
             _to_match_recomendado(
                 vinculo,
