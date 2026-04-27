@@ -208,6 +208,22 @@ def listar_pendentes(db: Session = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
+# GET /api/v1/vinculos/voluntario/{voluntario_id}
+# ---------------------------------------------------------------------------
+@router.get(
+    "/voluntario/{voluntario_id}",
+    response_model=list[schemas.VinculoOut],
+    summary="Listar vínculos de um voluntário",
+    description="Retorna todos os vínculos associados a um voluntário específico.",
+)
+def listar_vinculos_voluntario(voluntario_id: uuid.UUID, db: Session = Depends(get_db)):
+    from sqlalchemy import select as _select
+
+    stmt = _select(models.Vinculo).where(models.Vinculo.voluntario_id == voluntario_id)
+    return list(db.execute(stmt).scalars().all())
+
+
+# ---------------------------------------------------------------------------
 # POST /api/v1/vinculos/{id}/aprovar — instituição aprova candidato
 # ---------------------------------------------------------------------------
 @router.post(

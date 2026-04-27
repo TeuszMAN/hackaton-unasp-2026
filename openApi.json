@@ -9,10 +9,10 @@
     "version": "0.2.0"
   },
   "servers": [
-    {
-      "url": "https://coveting-economy-tingling.ngrok-free.dev",
-      "description": "Servidor Local via ngrok"
-    }
+  {
+    "url": "https://coveting-economy-tingling.ngrok-free.dev",
+    "description": "Servidor Local via ngrok"
+  }
   ],
   "paths": {
     "/": {
@@ -1077,6 +1077,54 @@
                   },
                   "type": "array",
                   "title": "Response Listar Pendentes Api V1 Vinculos Pendentes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vinculos/voluntario/{voluntario_id}": {
+      "get": {
+        "tags": [
+          "Vínculos"
+        ],
+        "summary": "Listar vínculos de um voluntário",
+        "description": "Retorna todos os vínculos associados a um voluntário específico.",
+        "operationId": "listar_vinculos_voluntario_api_v1_vinculos_voluntario__voluntario_id__get",
+        "parameters": [
+          {
+            "name": "voluntario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Voluntario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VinculoOut"
+                  },
+                  "title": "Response Listar Vinculos Voluntario Api V1 Vinculos Voluntario  Voluntario Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }

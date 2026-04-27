@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MatchHelp — Meu Painel</title>
+        <script src="https://unpkg.com/lucide@latest"></script>
+        <link rel="stylesheet" href="../asset/css/style-home.css" />
+    </head>
+    <body>
+        <div class="mh-shell">
+            <header class="mh-topbar">
+                <div class="mh-brand">
+                    <div class="mh-brand-mark"><i
+                            data-lucide="heart-handshake"></i></div>
+                    <div>
+                        <div class="mh-brand-name"><span
+                                class="accent">Match</span>Help</div>
+                        <div class="mh-brand-sub">Área do Voluntário</div>
+                    </div>
+                </div>
+                <nav class="mh-topnav">
+                    <button onclick="sair()" class="mh-btn ghost text-red-500"
+                        style="color: #ef4444;"><i data-lucide="log-out"
+                            style="width:14px;height:14px"></i> Sair</button>
+                </nav>
+            </header>
+
+            <main class="mh-main"
+                style="max-width: 800px; margin: 0 auto; padding-top: 40px;">
+                <div
+                    style="background: white; padding: 40px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center;">
+                    <div
+                        style="width: 80px; height: 80px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i data-lucide="user-check"
+                            style="width: 40px; height: 40px;"></i>
+                    </div>
+                    <h1
+                        style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Olá,
+                        <span id="nomeVoluntario">Voluntário</span>!</h1>
+                    <p style="color: #64748b; margin-bottom: 30px;">Seu perfil
+                        está ativo e pronto para receber acionamentos.</p>
+
+                    <div id="meusVinculos">
+                        <div class="mh-empty">
+                            <i data-lucide="loader-2" class="animate-spin"
+                                style="width:24px;height:24px;margin:0 auto 10px;"></i>
+                            Carregando seus chamados...
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <script src="../asset/js/api-config.js"></script>
+        <script>
+    lucide.createIcons();
+
+    if (!localStorage.getItem('mh_token') || !localStorage.getItem('mh_voluntario_id')) {
+      window.location.href = 'login.html';
+    }
+
+    const nome = localStorage.getItem('mh_nome');
+    const voluntarioId = localStorage.getItem('mh_voluntario_id');
+    
+    if (nome) {
+      document.getElementById('nomeVoluntario').textContent = nome.split(' ')[0];
+    }
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    }
+
+    function traduzirStatus(status) {
+      const map = {
+        proposto: '<span class="mh-badge amber">Ação Necessária</span>',
+        aceito: '<span class="mh-badge green">Aceito</span>',
+        em_atendimento: '<span class="mh-badge blue">Em Atendimento</span>',
+        concluido: '<span class="mh-badge slate">Concluído</span>',
+        recusado: '<span class="mh-badge red">Recusado</span>',
+        cancelado: '<span class="mh-badge slate">Cancelado</span>'
+      };
+      return map[status] || `<span class="mh-badge slate">${status}</span>`;
+    }
+
+    async function carregarVinculos() {
+      const container = document.getElementById('meusVinculos');
+      try {
+        const vinculos = await window.matchhelpFetch(`/api/v1/vinculos/voluntario/${voluntarioId}`);
+        
+        // Filtra para não mostrar os rejeitados pela instituição ou aguardando aprovação dela
+        const visiveis = vinculos.filter(v => v.status !== 'aguardando_aprovacao' && v.status !== 'rejeitado');
+        
+        if (visiveis.length === 0) {
+          container.innerHTML = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: left;">
+              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="bell-ring" style="width: 18px; height: 18px; color: #3b82f6;"></i> Aguardando Chamados
+              </h3>
+              <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+                Nenhum chamado ativo no momento. Sempre que uma instituição registrar uma crise na sua região e for aprovado, ele aparecerá aqui.
+              </p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        container.innerHTML = `
+          <h3 style="font-size: 18px; font-weight: 800; text-align: left; margin-bottom: 16px; margin-top: 32px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+            Meus Acionamentos
+          </h3>
+          <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+            ${visiveis.map(v => {
+              const showAction = v.status === 'proposto';
+              return `
+                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Chamado #${v.necessidade_id.split('-')[0]}</div>
+                    <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">Score de Match: ${Math.round(v.score_match * 100)}%</div>
+                    ${traduzirStatus(v.status)}
+                  </div>
+                  ${showAction ? `
+                    <a href="voluntario-decisao.html?vinculo=${v.id}" class="mh-btn" style="text-decoration: none;">
+                      Visualizar e Responder
+                    </a>
+                  ` : `
+                    <a href="voluntario-decisao.html?vinculo=${v.id}" class="mh-btn ghost" style="text-decoration: none;">
+                      Ver Detalhes
+                    </a>
+                  `}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (err) {
+        container.innerHTML = `<div class="mh-error" style="display:block">Erro ao carregar chamados: ${err.message}</div>`;
+      }
+    }
+
+    carregarVinculos();
+  </script>
+    </body>
+</html>

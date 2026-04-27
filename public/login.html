@@ -1,125 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-br">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Match Help | Login</title>
-
-        <!-- Framework Tailwind CSS -->
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MatchHelp — Login do Voluntário</title>
         <script src="https://cdn.tailwindcss.com"></script>
-
-        <!-- Ícones Lucide -->
         <script src="https://unpkg.com/lucide@latest"></script>
-
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-
-        /* PALETA DE CORES EXTRAÍDA DA IMAGEM */
-        :root {
-            --brand-navy: #0a2540;    
-            --brand-blue: #0088ff;    
-            --brand-emerald: #00b894; 
-        }
-
-        body {
-            background-color: #ffffff;
-            color: #1e293b;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .login-input {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .login-input:focus {
-            border-color: var(--brand-blue);
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(0, 136, 255, 0.1);
-            outline: none;
-        }
-
-        .btn-primary {
-            background-color: var(--brand-navy);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--brand-blue);
-            transform: translateY(-1px);
-        }
-    </style>
     </head>
-    <body class="min-h-screen flex items-center justify-center p-6">
-
-        <div class="w-full max-w-md space-y-8">
-
-            <!-- Branding -->
-            <div class="text-center space-y-4">
+    <body
+        class="bg-slate-50 text-slate-900 flex items-center justify-center min-h-screen p-4">
+        <div
+            class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+            <div class="text-center mb-8">
                 <div
-                    class="inline-flex bg-[#0a2540] p-5 rounded-3xl shadow-xl text-white">
-                    <i data-lucide="handshake" class="w-12 h-12"
-                        style="color: var(--brand-blue)"></i>
+                    class="inline-flex bg-red-100 p-3 rounded-2xl text-red-600 mb-4">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
                 </div>
+                <h1 class="text-2xl font-bold">Acesso do Voluntário</h1>
+                <p class="text-slate-500 text-sm mt-2">
+                    Utilize o Login ID e a senha fornecidos pela assistente
+                    Judith.
+                </p>
+            </div>
+
+            <form id="loginForm" class="space-y-5">
+                <div id="errorBox"
+                    class="hidden bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100"></div>
+
                 <div>
-                    <h1
-                        class="text-5xl font-black tracking-tighter uppercase text-slate-900">MATCH<span
-                            style="color: var(--brand-blue)">HELP</span></h1>
-                </div>
-            </div>
-
-            <!-- Card de Login -->
-            <div
-                class="bg-white p-8 space-y-6 rounded-2xl border border-slate-200 shadow-2xl">
-                <div class="space-y-1 text-center">
-                    <h2
-                        class="text-xl font-bold text-slate-800 uppercase tracking-widest">Login</h2>
+                    <label
+                        class="block text-sm font-bold text-slate-700 mb-2">Login
+                        ID (8 caracteres)</label>
+                    <input type="text" id="loginId" required maxlength="8"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all font-mono uppercase"
+                        placeholder="ABC12345" />
                 </div>
 
-                <form id="login-form" class="space-y-4">
-                    <div class="space-y-1.5">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Usuário</label>
-                        <input type="email" required
-                            class="login-input w-full px-4 py-3 rounded-xl text-sm font-medium"
-                            placeholder="admin@matchhelp.org">
-                    </div>
+                <div>
+                    <label
+                        class="block text-sm font-bold text-slate-700 mb-2">Senha</label>
+                    <input type="password" id="senha" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all"
+                        placeholder="••••••••" />
+                </div>
 
-                    <div class="space-y-1.5">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Senha</label>
-                        <input type="password" required
-                            class="login-input w-full px-4 py-3 rounded-xl text-sm tracking-widest"
-                            placeholder="••••••••">
-                    </div>
-
-                    <button type="submit"
-                        class="btn-primary w-full font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 group uppercase tracking-widest text-xs">
-                        Entrar
-                        <i data-lucide="shield-check" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Rodapé simples -->
-            <p
-                class="text-center text-[9px] text-slate-400 uppercase font-bold tracking-[0.2em]">
-                Match Help • Segurança Garantida
-            </p>
+                <button type="submit" id="btnSubmit"
+                    class="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2 mt-4">
+                    Entrar <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </form>
         </div>
 
+        <script src="../asset/js/api-config.js"></script>
         <script>
-        // Inicializar ícones da biblioteca Lucide
-        lucide.createIcons();
+    lucide.createIcons();
 
-        // Lógica básica de submissão do formulário
-        document.getElementById('login-form').onsubmit = (e) => {
-            e.preventDefault();
-            // Ação de autenticação pode ser implementada aqui
-            console.log("Submissão de login processada.");
-        };
-    </script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const loginId = document.getElementById('loginId').value.trim();
+      const senha = document.getElementById('senha').value;
+      const btn = document.getElementById('btnSubmit');
+      const errorBox = document.getElementById('errorBox');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Entrando...';
+      lucide.createIcons();
+      errorBox.classList.add('hidden');
+
+      try {
+        const response = await fetch(`${window.MATCHHELP_API}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login_id: loginId, senha: senha })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Falha na autenticação');
+        }
+
+        // Salvar token e dados do usuário
+        localStorage.setItem('mh_token', data.token);
+        localStorage.setItem('mh_voluntario_id', data.voluntario_id);
+        localStorage.setItem('mh_nome', data.nome);
+
+        if (data.precisa_trocar_senha) {
+          window.location.href = 'trocar-senha.html';
+        } else {
+          window.location.href = 'painel-voluntario.html';
+        }
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Entrar <i data-lucide="arrow-right" class="w-5 h-5"></i>';
+        lucide.createIcons();
+      }
+    });
+  </script>
     </body>
 </html>
