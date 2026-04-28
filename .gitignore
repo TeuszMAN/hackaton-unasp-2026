@@ -23,6 +23,11 @@ env/
 # Environment variables
 .env
 .env.local
+.env.production
+.env.*.local
+
+# pgAdmin local config (não deve ir pro repo — pode conter referências sensíveis)
+pgadmin-servers.json
 
 # Docker
 *.log

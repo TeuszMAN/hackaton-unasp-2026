@@ -1,0 +1,32 @@
+# Arquivo APENAS para uso local em desenvolvimento.
+# NÃO é carregado automaticamente — precisa ser invocado explicitamente:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Em produção (VPS / CI), só o docker-compose.yml principal é usado, então
+# nem o pgAdmin nem a porta exposta do Postgres entram em produção.
+
+services:
+  db:
+    # Em dev, expõe o Postgres na 5433 do host para conexão direta com
+    # ferramentas locais (DBeaver, psql, TablePlus, etc.).
+    ports:
+      - "5433:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?PGADMIN_DEFAULT_EMAIL precisa estar definido no .env}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD precisa estar definido no .env}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+volumes:
+  pgadmin_data:
