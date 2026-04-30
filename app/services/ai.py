@@ -208,7 +208,7 @@ class IAWatsonxService(IAExtracaoService):
         self._fallback = IAFallbackKeywords()
         self.api_key = os.getenv("WATSONX_API_KEY")
         self.project_id = os.getenv("WATSONX_PROJECT_ID")
-        self.model_id = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+        self.model_id = os.getenv("WATSONX_MODEL_ID", "ibm/granite-4-h-small")
         self.url = os.getenv(
             "WATSONX_URL",
             "https://us-south.ml.cloud.ibm.com",
@@ -241,38 +241,49 @@ class IAWatsonxService(IAExtracaoService):
         *,
         max_tokens: int = 200,
         stop_sequences: list[str] | None = None,
+        system: str | None = None,
     ) -> str:
-        """Envia prompt ao Granite e retorna o texto gerado."""
+        """
+        Envia prompt ao Granite via endpoint de chat e retorna o texto gerado.
+
+        Usa `/ml/v1/text/chat` (formato OpenAI-compatible) — `/ml/v1/text/generation`
+        está deprecated e modelos chat (granite-4) não respondem corretamente lá.
+        """
         import httpx
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            access_token = await self._obter_token(client)
-            params = {
-                "decoding_method": "greedy",
-                "max_new_tokens": max_tokens,
-                "min_new_tokens": 5,
-                "repetition_penalty": 1.05,
-            }
-            if stop_sequences:
-                params["stop_sequences"] = stop_sequences
+        messages: list[dict[str, str]] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
 
+        body: dict = {
+            "model_id": self.model_id,
+            "project_id": self.project_id,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": 0,  # determinístico (substitui o antigo decoding_method=greedy)
+        }
+        if stop_sequences:
+            body["stop"] = stop_sequences
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            access_token = await self._obter_token(client)
             resp = await client.post(
-                f"{self.url}/ml/v1/text/generation?version=2024-05-01",
+                f"{self.url}/ml/v1/text/chat?version=2024-05-01",
                 headers={
                     "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
-                json={
-                    "model_id": self.model_id,
-                    "project_id": self.project_id,
-                    "input": prompt,
-                    "parameters": params,
-                },
+                json=body,
             )
             resp.raise_for_status()
             data = resp.json()
-            return (data.get("results") or [{}])[0].get("generated_text", "").strip()
+            choices = data.get("choices") or []
+            if not choices:
+                return ""
+            message = choices[0].get("message") or {}
+            return (message.get("content") or "").strip()
 
     # ---- Extração de habilidades do voluntário ---------------------------
     async def extrair_habilidades_voluntario(self, relato: str) -> ExtracaoVoluntario:
