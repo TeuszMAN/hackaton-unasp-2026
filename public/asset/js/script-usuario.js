@@ -85,27 +85,6 @@ window.wxOConfiguration = {
   chatOptions: {
     agentId: "8efb193d-a518-41dc-b248-6cf1fc73b783",
     agentEnvironmentId: "c8ee69af-31f9-4d5c-904e-f3b08fee9a40",
-    locale: "pt-BR",
-    // Overrides de UI em pt-BR — paliativo enquanto o agente não tem
-    // welcome/starters customizados no Orchestrate.
-    greeting: "Olá! Sou a Judith 👋, assistente do Match Help",
-    welcomeMessage: "Olá! Sou a Judith 👋, assistente do Match Help",
-    subtitle: "Estou aqui para conectar voluntários a situações de crise.",
-    disclaimer: "A precisão das respostas geradas pela IA pode variar. Verifique sempre as informações importantes.",
-    starterPrompts: [
-      { label: "Quero cadastrar uma instituição" },
-      { label: "Quero cadastrar um novo voluntário" },
-      { label: "Quero registrar uma situação de crise" },
-    ],
-    suggestedQuestions: [
-      "Quero cadastrar uma instituição",
-      "Quero cadastrar um novo voluntário",
-      "Quero registrar uma situação de crise",
-    ],
-    messages: {
-      disclaimer: "A precisão das respostas geradas pela IA pode variar. Verifique sempre as informações importantes.",
-      input_placeholder: "Digite sua mensagem...",
-    },
     showLauncher: true,
     onLoad: function (instance) {
       chatInstance = instance;
@@ -127,6 +106,7 @@ window.wxOConfiguration = {
       });
     },
   },
+  defaultLocale: "pt-BR",
 };
 
 (function () {
